@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 private val LearningGreen = Color(0xFF164B3A)
 private val LearningPale = Color(0xFFE5EBDD)
 
+private data class PrayerPage(val title: String, val subtitle: String, val entries: List<LearningEntry>)
+
 private data class LearningEntry(
     val title: String,
     val label: String,
@@ -123,7 +125,7 @@ fun PrayerVirtuesLearningScreen() {
             }
         }
         val page = content[selected]!!
-        LearningCard(page.first, page.second, page.third)
+        LearningCard(page.title, page.subtitle, page.entries)
     }
 }
 
