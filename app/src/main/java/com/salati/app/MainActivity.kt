@@ -52,7 +52,9 @@ class MainActivity : ComponentActivity() {
         PrayerNotifications.scheduleGazaReminder(this)
         requestNotificationPermission()
     }
-    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) AppUpdateWorker.schedule(this)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PrayerNotifications.createChannel(this)
