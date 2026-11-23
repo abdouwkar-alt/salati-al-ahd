@@ -120,7 +120,9 @@ private object QuranTextRepository {
 fun QuranReaderSection(
     prefs: android.content.SharedPreferences,
     context: Context,
-    onPositionSelected: (Int, String, Int) -> Unit
+    onPositionSelected: (Int, String, Int) -> Unit,
+    verseByVerse: Boolean = false,
+    showSearch: Boolean = true
 ) {
     var surahs by remember { mutableStateOf<List<QuranSurahData>>(emptyList()) }
     var selectedNumber by remember { mutableIntStateOf(prefs.getInt("quran_surah_number", 2).coerceIn(1, 114)) }
@@ -186,14 +188,14 @@ fun QuranReaderSection(
                         )
                     }
                 }
-                OutlinedTextField(
+                if (showSearch) OutlinedTextField(
                     value = search,
                     onValueChange = { search = it },
                     label = { Text("ابحث عن سورة في الفهرس") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                if (search.isNotBlank()) {
+                if (showSearch && search.isNotBlank()) {
                     surahs.filter { it.name.contains(search.trim(), ignoreCase = true) || it.englishName.contains(search.trim(), ignoreCase = true) }
                         .take(8)
                         .forEach { match ->
@@ -209,33 +211,57 @@ fun QuranReaderSection(
                         }
                 }
                 if (current != null) {
-                    Text("اضغط على أي آية لتثبيت موضع القراءة الحالي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
-                    Column(
-                        Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        current.ayahs.forEach { ayah ->
-                            Surface(
-                                color = if (ayah.number == selectedAyah) Color(0xFFD6E5D7) else MaterialTheme.colorScheme.surface,
-                                shape = MaterialTheme.shapes.medium
-                            ) {
-                                Column(
-                                    Modifier.fillMaxWidth().clickable {
+                    if (verseByVerse) {
+                        val ayah = current.ayahs.getOrNull(selectedAyah - 1)
+                        if (ayah != null) {
+                            Surface(color = Color(0xFFD6E5D7), shape = MaterialTheme.shapes.large) {
+                                Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text("الآية ${ayah.number} من ${current.ayahs.size}", color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
+                                    Text(ayah.text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                                }
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                OutlinedButton(onClick = {
+                                    if (selectedAyah > 1) {
+                                        selectedAyah--
+                                        prefs.edit().putString("quran_ayah", selectedAyah.toString()).apply()
+                                        onPositionSelected(current.number, current.name, selectedAyah)
+                                    }
+                                }, enabled = selectedAyah > 1) { Text("الآية السابقة") }
+                                Button(onClick = {
+                                    if (selectedAyah < current.ayahs.size) {
+                                        selectedAyah++
+                                        prefs.edit().putString("quran_ayah", selectedAyah.toString()).apply()
+                                        onPositionSelected(current.number, current.name, selectedAyah)
+                                    } else if (current.number < 114) {
+                                        val next = surahs.firstOrNull { it.number == current.number + 1 }
+                                        if (next != null) {
+                                            selectedNumber = next.number
+                                            selectedAyah = 1
+                                            prefs.edit().putInt("quran_surah_number", next.number).putString("quran_surah", next.name).putString("quran_ayah", "1").apply()
+                                            onPositionSelected(next.number, next.name, 1)
+                                        }
+                                    }
+                                }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A))) {
+                                    Text(if (selectedAyah < current.ayahs.size) "الآية التالية" else if (current.number < 114) "السورة التالية" else "آخر سورة")
+                                }
+                            }
+                            Text("عند التوقف عن القراءة، اضغط على «تحديد موضع التوقف».", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
+                            OutlinedButton(onClick = { onPositionSelected(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) { Text("تحديد موضع التوقف عند الآية ${selectedAyah}") }
+                        }
+                    } else {
+                        Text("اضغط على أي آية لتثبيت موضع القراءة الحالي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
+                        Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            current.ayahs.forEach { ayah ->
+                                Surface(color = if (ayah.number == selectedAyah) Color(0xFFD6E5D7) else MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.medium) {
+                                    Column(Modifier.fillMaxWidth().clickable {
                                         selectedAyah = ayah.number
-                                        prefs.edit().putInt("quran_surah_number", current.number)
-                                            .putString("quran_surah", current.name)
-                                            .putString("quran_ayah", ayah.number.toString()).apply()
+                                        prefs.edit().putInt("quran_surah_number", current.number).putString("quran_surah", current.name).putString("quran_ayah", ayah.number.toString()).apply()
                                         onPositionSelected(current.number, current.name, ayah.number)
-                                    }.padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(5.dp)
-                                ) {
-                                    Text("الآية ${ayah.number}", color = Color(0xFF164B3A), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                                    Text(
-                                        ayah.text,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        style = MaterialTheme.typography.titleLarge,
-                                        textAlign = TextAlign.Center
-                                    )
+                                    }.padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                        Text("الآية ${ayah.number}", color = Color(0xFF164B3A), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                        Text(ayah.text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+                                    }
                                 }
                             }
                         }
