@@ -70,7 +70,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
         JourneyDoor("الدعاء", "الدعاء", "الأدعية", .24f, .77f)
     )
     val prayerX = .5f
-    val prayerY = .91f
+    val prayerY = .89f
     val selected = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val opened = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val progress = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
@@ -94,8 +94,8 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
         val density = androidx.compose.ui.platform.LocalDensity.current
         val widthPx = with(density) { maxWidth.toPx() }
         val heightPx = with(density) { maxHeight.toPx() }
-        val doorHeight = (maxHeight * .105f).coerceIn(42.dp, 58.dp)
-        val doorWidth = (maxWidth * .25f).coerceIn(76.dp, 94.dp)
+        val doorHeight = (maxHeight * .07f).coerceIn(30.dp, 38.dp)
+        val doorWidth = (maxWidth * .23f).coerceIn(70.dp, 84.dp)
         val points = buildList {
             add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .055f))
             doors.forEach { add(androidx.compose.ui.geometry.Offset(widthPx * it.x, heightPx * it.y)) }
@@ -128,7 +128,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
             Column(
                 modifier = Modifier.offset(
                     x = maxWidth * door.x - doorWidth / 2,
-                    y = maxHeight * door.y - doorHeight * .42f
+                    y = maxHeight * door.y - doorHeight * .40f
                 ).width(doorWidth),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -138,7 +138,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
             }
         }
         Column(
-            modifier = Modifier.offset(x = maxWidth * prayerX - maxWidth * .18f, y = maxHeight * prayerY - 38.dp).width(maxWidth * .36f),
+            modifier = Modifier.offset(x = maxWidth * prayerX - maxWidth * .18f, y = maxHeight * prayerY - 34.dp).width(maxWidth * .36f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
@@ -153,7 +153,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
                 modifier = Modifier.offset {
                     androidx.compose.ui.unit.IntOffset(
                         (walkerPoint.x - widthPx * .40f).roundToInt(),
-                        (walkerPoint.y - with(density) { 48.dp.toPx() }).roundToInt()
+                        (walkerPoint.y - with(density) { 48.dp.toPx() }).coerceAtLeast(0f).roundToInt()
                     )
                 }.width(maxWidth * .80f),
                 color = ShellGreen, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium,
@@ -287,7 +287,7 @@ private fun DoorLeaf() {
 @Composable
 private fun PrayerDoorGraphic(openProgress: Float, onOpen: () -> Unit, compact: Boolean = false) {
     Row(
-        Modifier.fillMaxWidth().height(if (compact) 72.dp else 142.dp).clickable(onClick = onOpen),
+        Modifier.fillMaxWidth().height(if (compact) 52.dp else 142.dp).clickable(onClick = onOpen),
         horizontalArrangement = Arrangement.Center
     ) {
         listOf(false, true).forEach { right ->
