@@ -69,13 +69,13 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         JourneyDoor("الأذكار", "الأذكار", "الأذكار", .76f, .60f),
         JourneyDoor("سنن الرسول ﷺ", "سنن الرسول ﷺ", "السنن", .24f, .71f),
         JourneyDoor("الدعاء", "الدعاء", "الأدعية", .76f, .82f),
-        JourneyDoor("القرآن", "تدبر القرآن", "تدبر القرآن", .24f, .93f)
+        JourneyDoor("القرآن", "تدبر القرآن", "تدبر القرآن", .24f, .77f)
     )
     val prayerX = .5f
-    val prayerY = 1.045f
+    val prayerY = .88f
     var selected by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     var opened by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    val progress = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(0f) }
+    val progress = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
     val prayerProgress = androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (opened == 8) 1f else 0f,
         animationSpec = androidx.compose.animation.core.tween(850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
@@ -92,12 +92,12 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         "وَسَارِعُوا إِلَىٰ مَغْفِرَةٍ مِنْ رَبِّكُمْ"
     )
     val currentVerse = if (selected < 0) verses[0] else verses[(selected + 1) % verses.size]
-    val height = 790.dp
+    val height = 900.dp
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(height)) {
         val widthPx = with(androidx.compose.ui.platform.LocalDensity.current) { maxWidth.toPx() }
         val heightPx = with(androidx.compose.ui.platform.LocalDensity.current) { height.toPx() }
         val points = buildList {
-            add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .045f))
+            add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .105f))
             doors.forEach { add(androidx.compose.ui.geometry.Offset(widthPx * it.x, heightPx * it.y)) }
             add(androidx.compose.ui.geometry.Offset(widthPx * prayerX, heightPx * prayerY))
         }
@@ -186,7 +186,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
             }
         } else {
             androidx.compose.foundation.Canvas(
-                Modifier.offset(x = maxWidth * .5f - 14.dp, y = 40.dp).size(28.dp, 54.dp)
+                Modifier.offset(x = maxWidth * .5f - 14.dp, y = 62.dp).size(28.dp, 54.dp)
             ) {
                 val c = Color(0xFF59675D)
                 drawCircle(c, 5.5.dp.toPx(), androidx.compose.ui.geometry.Offset(size.width / 2, 7.dp.toPx()))
