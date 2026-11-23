@@ -152,7 +152,8 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
         Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("إنهاء جلسة قيام الليل", color = SectionGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text("عدد الآيات المسجل في الجلسة: $verses")
+                Text("عدد الآيات المسجّل في الجلسة: $verses")
+                Text("موضع القراءة: $fromSurah، من الآية $fromAyah إلى $toSurah، الآية $toAyah")
                 Text("قال رسول الله ﷺ: «مَن قام بعشر آيات لم يُكتب من الغافلين، ومن قام بمئة آية كُتب من القانتين، ومن قام بألف آية كُتب من المقنطرين».")
                 Text("سنن أبي داود (1398)، صحيح الألباني.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                 Text(reward, color = SectionGreen, fontWeight = FontWeight.SemiBold)
