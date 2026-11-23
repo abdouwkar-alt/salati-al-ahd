@@ -346,6 +346,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("نافلة_"), isFard = false, prefs = prefs) }
             } else if (mainTab == "قيام_السنن") {
                 item { QiyamSunnahLearningScreen() }
+            } else if (mainTab == "قيام_الفضل") {
+                item { QiyamVirtuesLearningScreen() }
             } else if (mainTab == "قيام_السجل") {
                 item { QiyamHistoryScreen(prefs = prefs) }
             } else if (mainTab == "قيام_إنهاء") {
