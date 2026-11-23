@@ -174,6 +174,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
         }
     }
     val todayTimes = remember(today, lat, lon) { PrayerTimes.forDate(today, lat, lon, ZoneId.systemDefault()) }
+    val duhaStartTime = remember(today, lat, lon) { PrayerTimes.duhaStartTime(today, lat, lon, ZoneId.systemDefault()) }
     val tomorrowTimes = remember(tomorrow, lat, lon) { PrayerTimes.forDate(tomorrow, lat, lon, ZoneId.systemDefault()) }
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale("ar"))
     val nightStart = todayTimes.first { it.name == "المغرب" }.time
@@ -222,8 +223,12 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     Surface(Modifier.fillMaxSize(), color = Cream) {
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
-                Text("الصَّلَاةُ جَامِعَةٌ", style = MaterialTheme.typography.headlineLarge, color = Green, fontWeight = FontWeight.Bold)
-                Text("\u2067﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَوْقُوتًا﴾ [النساء: 103]\u2069", color = Color(0xFF6D716A))
+                Card(colors = CardDefaults.cardColors(containerColor = Green)) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("الصَّلَاةُ جَامِعَةٌ", style = MaterialTheme.typography.headlineLarge, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("\u2067﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَوْقُوتًا﴾ [النساء: 103]\u2069", color = Color.White.copy(alpha = 0.9f))
+                    }
+                }
             }
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
@@ -314,6 +319,24 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                     }
                                 }
                                 HorizontalDivider(color = Color(0xFFD4DDCE))
+                                if (prayer.name == "الفجر") {
+                                    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text("الضحى", fontWeight = FontWeight.SemiBold)
+                                            Text("نافلة — ليست صلاة موقوتة بأذان", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D716A))
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(Instant.ofEpochMilli(duhaStartTime).atZone(ZoneId.systemDefault()).format(timeFormatter))
+                                            Text(if (duhaDone) "تم تسجيلها اليوم" else "لم تسجل اليوم", style = MaterialTheme.typography.bodySmall, color = Green)
+                                            TextButton(onClick = {
+                                                duhaDone = !duhaDone
+                                                actionFeedback = "أستغفر الله"
+                                                prefs.edit().putBoolean("duha_" + today, duhaDone).apply()
+                                            }) { Text(if (duhaDone) "تراجع" else "سجل الضحى", style = MaterialTheme.typography.labelSmall) }
+                                        }
+                                    }
+                                    HorizontalDivider(color = Color(0xFFD4DDCE))
+                                }
                                 if (prayer.name == "العشاء") {
                                     Column(Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                         Text("قيام الليل — نافلة", color = Green, fontWeight = FontWeight.SemiBold)
@@ -323,22 +346,6 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                 }
                             }
                             Text("المواقيت محسوبة محليًا بطريقة تقريبية؛ راجعها مع التقويم الرسمي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
-                        }
-                    }
-                }
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("صلاة الضحى", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
-                            Text("وقتها من ارتفاع الشمس إلى قبيل الزوال. سجّلها بعد أدائها.")
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (duhaDone) "تم تسجيل الضحى اليوم" else "لم تسجل الضحى اليوم")
-                                Button(onClick = {
-                                    duhaDone = !duhaDone
-                                    actionFeedback = "أستغفر الله"
-                                    prefs.edit().putBoolean("duha_" + today, duhaDone).apply()
-                                }, colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text(if (duhaDone) "تراجع" else "سجل الضحى") }
-                            }
                         }
                     }
                 }
