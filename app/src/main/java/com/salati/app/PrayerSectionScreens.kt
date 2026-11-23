@@ -236,3 +236,31 @@ fun QiyamHistoryScreen(prefs: SharedPreferences) {
         }
     }
 }
+
+
+@Composable
+fun QiyamVirtuesLearningScreen() {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("فضل قيام الليل", color = SectionGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text("قال الله تعالى: ﴿وَمِنَ اللَّيْلِ فَتَهَجَّدْ بِهِ نَافِلَةً لَكَ عَسَىٰ أَنْ يَبْعَثَكَ رَبُّكَ مَقَامًا مَحْمُودًا﴾", style = MaterialTheme.typography.bodyLarge)
+                Text("الإسراء: 79", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+        Card {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("أفضل الصلاة بعد الفريضة", color = SectionGreen, fontWeight = FontWeight.Bold)
+                Text("قال رسول الله ﷺ: «أفضل الصلاة بعد الصلاة المكتوبة الصلاة في جوف الليل».")
+                Text("صحيح مسلم (1163).", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+                Text("المعنى باختصار: صلاة الليل من أفضل صلوات التطوع بعد الفرائض.")
+            }
+        }
+        Card {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("الاستمرار ولو بالقليل", color = SectionGreen, fontWeight = FontWeight.Bold)
+                Text("ابدأ بما تستطيع، ولو بركعتين، واجعل لك وردًا يسيرًا تداوم عليه دون أن تحمّل نفسك ما لا تطيق.")
+            }
+        }
+    }
+}
