@@ -131,10 +131,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
                 modifier = Modifier.offset(
                     x = maxWidth * door.x - width / 2,
                     y = height * door.y - 62.dp
-                ).width(width).clickable {
-                    selected.intValue = index
-                    opened.intValue = -1
-                },
+                ).width(width),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -157,15 +154,20 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
             })
             Text("عماد الدين", color = ShellGreen.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
         }
+        val walkerPoint = routePointAt(route, routeLength * progress.value)
         if (selected.intValue >= 0) {
             Text(
                 currentVerse,
-                modifier = Modifier.align(Alignment.TopCenter).offset(y = 48.dp).fillMaxWidth(.82f),
+                modifier = Modifier.offset {
+                    androidx.compose.ui.unit.IntOffset(
+                        (walkerPoint.x - widthPx * .41f).roundToInt(),
+                        (walkerPoint.y - with(density) { 76.dp.toPx() }).roundToInt()
+                    )
+                }.width(maxWidth * .82f),
                 color = ShellGreen, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-        val walkerPoint = routePointAt(route, routeLength * progress.value)
         if (selected.intValue >= 0) {
             androidx.compose.foundation.Canvas(
                 Modifier.offset {
@@ -208,6 +210,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
                     )
                 )
                 opened.intValue = selected.intValue
+                kotlinx.coroutines.delay(900)
                 val door = if (selected.intValue == 8) null else doors[selected.intValue]
                 if (door != null) onOpen(door.section, door.destination, "")
                 else onOpen("الصلاة", "الصلاة", "")
