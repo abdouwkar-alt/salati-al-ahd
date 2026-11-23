@@ -51,7 +51,7 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Text("جلسة قيام الليل", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text("مصحف قيام الليل", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                 Text("الجلسات المسجلة اليوم: $sessions")
                 Button(onClick = {
                     sessions++
