@@ -138,6 +138,10 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
     var reflection by remember(today) { mutableStateOf("") }
     var saved by remember(today) { mutableStateOf(false) }
     val verses = prefs.getInt("qiyam_active_verses", 0).coerceAtLeast(0)
+    val fromSurah = prefs.getString("qiyam_active_start_surah_name", "") ?: ""
+    val fromAyah = prefs.getInt("qiyam_active_start_ayah", 0)
+    val toSurah = prefs.getString("qiyam_active_end_surah_name", "") ?: ""
+    val toAyah = prefs.getInt("qiyam_active_end_ayah", 0)
     val reward = when {
         verses >= 1000 -> "بفضل الله، بلغت ألف آية في قيامك؛ ورد في الحديث: «كُتب من المقنطرين»."
         verses >= 100 -> "بفضل الله، بلغت مئة آية في قيامك؛ ورد في الحديث: «كُتب من القانتين»."
@@ -171,8 +175,15 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
                     .putInt("qiyam_verses_" + today, prefs.getInt("qiyam_verses_" + today, 0) + verses)
                 val history = prefs.getString("qiyam_session_history", "[]") ?: "[]"
                 val array = try { org.json.JSONArray(history) } catch (_: Exception) { org.json.JSONArray() }
-                array.put(org.json.JSONObject().put("date", today).put("verses", verses).put("rakats", rakats.toIntOrNull() ?: 0).put("witr", witr).put("reflection", reflection.trim()))
-                editor.putString("qiyam_session_history", array.toString()).remove("qiyam_active_verses").remove("qiyam_active_start").remove("qiyam_active_end").apply()
+                array.put(org.json.JSONObject()
+                    .put("date", today).put("verses", verses)
+                    .put("surah", if (fromSurah == toSurah) fromSurah else "$fromSurah إلى $toSurah")
+                    .put("fromAyah", fromAyah).put("toAyah", toAyah).put("stopAyah", toAyah)
+                    .put("rakats", rakats.toIntOrNull() ?: 0).put("witr", witr).put("reflection", reflection.trim()))
+                editor.putString("qiyam_session_history", array.toString())
+                    .remove("qiyam_active_verses").remove("qiyam_active_start").remove("qiyam_active_end")
+                    .remove("qiyam_active_start_surah_name").remove("qiyam_active_start_ayah")
+                    .remove("qiyam_active_end_surah_name").remove("qiyam_active_end_ayah").apply()
                 saved = true
                 onSaved()
             }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) { Text("حفظ الجلسة") }
@@ -185,16 +196,17 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
 
 @Composable
 private fun PrayerDhikrCounter(prefs: SharedPreferences, key: String, title: String, phrase: String, target: Int, note: String, source: String) {
-    var count by remember(key) { mutableIntStateOf(prefs.getInt(key, 0).coerceAtLeast(0)) }
+    val dailyKey = key + "_" + LocalDate.now().toString()
+    var count by remember(dailyKey) { mutableIntStateOf(prefs.getInt(dailyKey, 0).coerceAtLeast(0)) }
     Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(title, color = SectionGreen, fontWeight = FontWeight.Bold)
             Text(phrase, style = MaterialTheme.typography.titleMedium)
             Text("$count / $target", color = SectionGreen, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { count++; prefs.edit().putInt(key, count).apply() }, colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) { Text("+1") }
+                Button(onClick = { count++; prefs.edit().putInt(dailyKey, count).apply() }, colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) { Text("+1") }
                 OutlinedButton(onClick = { count = (count - 1).coerceAtLeast(0); prefs.edit().putInt(key, count).apply() }) { Text("تراجع") }
-                TextButton(onClick = { count = 0; prefs.edit().putInt(key, 0).apply() }) { Text("تصفير") }
+                TextButton(onClick = { count = 0; prefs.edit().putInt(dailyKey, 0).apply() }) { Text("تصفير") }
             }
             Text(note, style = MaterialTheme.typography.bodySmall)
             Text(source, color = Color.Gray, style = MaterialTheme.typography.labelSmall)
