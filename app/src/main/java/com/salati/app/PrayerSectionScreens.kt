@@ -156,7 +156,12 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
                 Text("موضع القراءة: $fromSurah، من الآية $fromAyah إلى $toSurah، الآية $toAyah")
                 Text("قال رسول الله ﷺ: «مَن قام بعشر آيات لم يُكتب من الغافلين، ومن قام بمئة آية كُتب من القانتين، ومن قام بألف آية كُتب من المقنطرين».")
                 Text("سنن أبي داود (1398)، صحيح الألباني.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                Text(reward, color = SectionGreen, fontWeight = FontWeight.SemiBold)
+                if (saved) {
+                    Text(reward, color = SectionGreen, fontWeight = FontWeight.Bold)
+                    Text("تم تسجيل الجلسة. هذه هي المنزلة الموافقة لعدد الآيات المسجّل، ولا تعني الحكم على القبول أو تحقق الأجر لشخص بعينه.", color = SectionGreen, fontWeight = FontWeight.SemiBold)
+                } else {
+                    Text("بعد الضغط على «حفظ الجلسة» ستظهر هنا المنزلة الموافقة لعدد الآيات المسجّل.")
+                }
                 Text("هذا تذكير بما ورد في الحديث بناءً على عدد الآيات الذي سجلته، وليس حكمًا على القبول أو تحقق الأجر لشخص بعينه.")
             }
         }
