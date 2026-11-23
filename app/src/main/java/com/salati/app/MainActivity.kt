@@ -139,6 +139,11 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var prayerBase by remember { mutableIntStateOf(prefs.getInt("prayer_base", -1)) }
     var fastBase by remember { mutableIntStateOf(prefs.getInt("fast_base", -1)) }
     var mainTab by remember { mutableStateOf("الرئيسية") }
+    val navigationHistory = remember { mutableStateListOf<Pair<String, String>>() }
+    fun navigateTo(destination: String) {
+        navigationHistory.add(mainTab to activeSection)
+        mainTab = destination
+    }
     var activeSection by remember { mutableStateOf("البداية") }
     var sectionSubTab by remember { mutableStateOf("") }
     var calculatorView by remember { mutableStateOf("الحاسبة") }
@@ -264,7 +269,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     onOpen = { section, destination, subTab ->
                         activeSection = section
-                        mainTab = if (section == "الصلاة") "بوابة_الصلاة" else destination
+                        navigationHistory.clear()
+                        mainTab = destination
                         sectionSubTab = subTab.ifBlank {
                             when (section) {
                                 "الصلاة" -> "الصلاة المفروضة"
@@ -291,9 +297,15 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             }
         } else {
         androidx.activity.compose.BackHandler(enabled = mainTab != "الرئيسية") {
-            mainTab = "الرئيسية"
-            activeSection = "البداية"
-            sectionSubTab = ""
+            if (navigationHistory.isNotEmpty()) {
+                val previous = navigationHistory.removeAt(navigationHistory.lastIndex)
+                mainTab = previous.first
+                activeSection = previous.second
+            } else {
+                mainTab = "الرئيسية"
+                activeSection = "البداية"
+                sectionSubTab = ""
+            }
         }
         Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -315,10 +327,11 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         onSelect = { label, destination ->
                             sectionSubTab = label
                             if (destination == "القضاء_الحاسبة") {
+                                navigationHistory.add(mainTab to activeSection)
                                 mainTab = "القضاء"
                                 calculatorView = "الحاسبة"
                             } else {
-                                mainTab = destination
+                                navigateTo(destination)
                             }
                         }
                     )
@@ -336,11 +349,15 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     }
                 }
             } else if (mainTab.startsWith("فرض_")) {
-                item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("فرض_"), isFard = true) }
+                item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("فرض_"), isFard = true, prefs = prefs) }
             } else if (mainTab.startsWith("نافلة_")) {
-                item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("نافلة_"), isFard = false) }
+                item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("نافلة_"), isFard = false, prefs = prefs) }
             } else if (mainTab == "قيام_السنن") {
                 item { QiyamSunnahLearningScreen() }
+            } else if (mainTab == "قيام_السجل") {
+                item { QiyamHistoryScreen(prefs = prefs) }
+            } else if (mainTab == "قيام_إنهاء") {
+                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
             } else if (mainTab == "الإنفاق") {
                 item {
                     SectionPlaceholder(
@@ -785,9 +802,10 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
                         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text("جلسة قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                            Text("اختر السورة واقرأ آية آية. يُحفظ موضع القراءة، ويُحسب نطاق الآيات الذي سجلته لهذه الجلسة.")
+                            Text("اضغط «اختر السورة» لفتح قائمة السور. عند التوقف، اضغط على آخر آية قرأتها لتسجيل موضعك وعدد الآيات.")
                         }
                     }
+                    Button(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("إنهاء الجلسة") }
                 }
                 item {
                     QuranReaderSection(prefs = prefs, context = context) { surahNumber, surahName, ayahNumber ->
@@ -805,7 +823,6 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         qiyamRefresh++
                     }
                 }
-                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
             } else if (mainTab == "الإحصائيات") {
                 item {
                     PrayerStatisticsScreen(
