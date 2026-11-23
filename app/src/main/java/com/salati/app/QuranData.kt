@@ -130,6 +130,7 @@ fun QuranReaderSection(
     var selectedAyah by remember { mutableIntStateOf(prefs.getString("quran_ayah", "1")?.toIntOrNull() ?: 1) }
     var search by remember { mutableStateOf("") }
     var menuExpanded by remember { mutableStateOf(false) }
+    var readingStarted by remember { mutableStateOf(prefs.getBoolean("qiyam_reading_started", false)) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -155,7 +156,7 @@ fun QuranReaderSection(
 
     Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE5EBDD))) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("مصحف القرآن الكريم", style = MaterialTheme.typography.titleLarge, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
+            Text(if (verseByVerse) "مصحف قيام الليل" else "مصحف القرآن الكريم", style = MaterialTheme.typography.titleLarge, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
             Text("فهرس السور والآيات بالنص العثماني. اضغط على الآية لتسجيل موضع قراءتك.")
             if (loading) {
                 LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFF164B3A))
@@ -217,8 +218,8 @@ fun QuranReaderSection(
                         if (ayah != null) {
                             Surface(color = Color(0xFFD6E5D7), shape = MaterialTheme.shapes.large) {
                                 Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Text("الآية ${ayah.number} من ${current.ayahs.size}", color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
-                                    Text(ayah.text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                                    Text(current.name, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
+                                    Text(ayah.text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                                 }
                             }
                             if (onSessionStart != null) {
@@ -253,7 +254,7 @@ fun QuranReaderSection(
                                 }
                             }
                             Text("عند التوقف عن القراءة، اضغط على «تحديد موضع التوقف».", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
-                            OutlinedButton(onClick = { onPositionSelected(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) { Text("تحديد موضع التوقف عند الآية ${selectedAyah}") }
+                            OutlinedButton(onClick = { onPositionSelected(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) { Text("التوقف للركوع وحفظ الموضع") }
                         }
                     } else {
                         Text("اضغط على أي آية لتثبيت موضع القراءة الحالي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
