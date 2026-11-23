@@ -6,6 +6,7 @@ Original application code in this repository is licensed under the MIT License; 
 ## Android and application libraries
 The app directly uses the following AndroidX / Jetpack libraries:
 - AndroidX Activity Compose 1.10.1
+- AndroidX Fragment KTX 1.8.5
 - Jetpack Compose BOM 2025.02.00 (Compose UI, Material 3, and Material Icons Extended)
 - AndroidX Core KTX 1.15.0
 - AndroidX WorkManager KTX 2.10.0
