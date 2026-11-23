@@ -855,6 +855,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
         }
     }
     }
+    }
 }
 
 @Composable
