@@ -1,3 +1,5 @@
 # Salati Android app
 
-The Android app source is maintained on the salati-app branch.
+The active Android app source and day-to-day development branch are maintained on `main`.
+
+The `ui/navigation-refresh` branch is an exploratory navigation draft and is not the current release baseline. Keep it separate until its changes are reviewed and deliberately integrated.
