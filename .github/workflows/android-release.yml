@@ -46,6 +46,8 @@ jobs:
           echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/salati-release.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/salati-release.jks" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+      - name: Generate third-party license report
+        run: gradle :app:generateLicenseReport --no-parallel
       - name: Build signed release APK
         run: gradle assembleRelease
       - name: Verify APK signature
@@ -63,6 +65,7 @@ jobs:
           path: |
             app/build/outputs/apk/release/app-release.apk
             app-release.sha256
+            app/build/reports/dependency-license/
           retention-days: 90
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
