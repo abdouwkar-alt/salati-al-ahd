@@ -129,7 +129,8 @@ fun AuthenticDhikrScreen(prefs: SharedPreferences) {
             phrase = "سُبْحَانَ اللهِ وَبِحَمْدِهِ",
             target = 100,
             occasion = "مائة مرة في اليوم",
-            source = "صحيح البخاري (6405)"
+            source = "صحيح البخاري (6405)",
+            reward = "ورد في الحديث أن من قال «سبحان الله وبحمده» مائة مرة حُطّت خطاياه وإن كانت مثل زبد البحر. يُعرض الفضل كما ورد، ولا يحكم العداد على القبول."
         )
         Text("أذكار دبر الصلاة المفروضة", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
         Text("هذه العدادات لجلسة واحدة بعد الصلاة؛ أعد ضبطها بعد كل صلاة.")
@@ -153,7 +154,8 @@ private fun DhikrCounterCard(
     phrase: String,
     target: Int,
     occasion: String,
-    source: String
+    source: String,
+    reward: String = ""
 ) {
     var count by remember(keyName) { mutableIntStateOf(prefs.getInt(keyName, 0).coerceAtLeast(0)) }
     Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
@@ -184,7 +186,10 @@ private fun DhikrCounterCard(
                     prefs.edit().putInt(keyName, 0).apply()
                 }) { Text("تصفير") }
             }
-            if (count >= target) Text("اكتمل العدد المحدد.", color = WorshipGreen, fontWeight = FontWeight.SemiBold)
+            if (count >= target) {
+                Text("اكتمل العدد المحدد.", color = WorshipGreen, fontWeight = FontWeight.SemiBold)
+                if (reward.isNotBlank()) Text(reward, color = WorshipGreen, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
