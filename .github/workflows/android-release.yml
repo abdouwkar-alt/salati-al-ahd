@@ -66,6 +66,7 @@ jobs:
             app/build/outputs/apk/release/app-release.apk
             app-release.sha256
             app-release-signature.txt
+            app-release-signature.txt
             app/build/reports/dependency-license/
           retention-days: 90
       - name: Publish GitHub Release
