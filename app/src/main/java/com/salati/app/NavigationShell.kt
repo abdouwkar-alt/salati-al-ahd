@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -109,7 +111,7 @@ fun SectionNavigation(
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(section, color = ShellGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             options.forEach { (label, destination) ->
                 FilterChip(
                     selected = selected == label || (selected.isBlank() && options.firstOrNull()?.first == label),
@@ -222,13 +224,9 @@ data class DhikrBurst(val id: Int, val position: Offset)
 
 @Composable
 fun DhikrBurstLabel(burst: DhikrBurst, onFinished: () -> Unit) {
-    val rise = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(0f) }
-    val alpha = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(1f) }
+    val progress = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
     androidx.compose.runtime.LaunchedEffect(burst.id) {
-        kotlinx.coroutines.coroutineScope {
-            launch { rise.animateTo(54f, androidx.compose.animation.core.tween(520)) }
-            launch { alpha.animateTo(0f, androidx.compose.animation.core.tween(520)) }
-        }
+        progress.animateTo(1f, androidx.compose.animation.core.tween(620))
         onFinished()
     }
     Text(
@@ -237,7 +235,12 @@ fun DhikrBurstLabel(burst: DhikrBurst, onFinished: () -> Unit) {
         fontWeight = FontWeight.Bold,
         style = MaterialTheme.typography.labelMedium,
         modifier = Modifier
-            .offset { androidx.compose.ui.unit.IntOffset(burst.position.x.toInt(), burst.position.y.toInt() - rise.value.toInt()) }
-            .graphicsLayer { this.alpha = alpha.value }
+            .offset {
+                androidx.compose.ui.unit.IntOffset(
+                    burst.position.x.toInt(),
+                    burst.position.y.toInt() - (progress.value * 56f).toInt()
+                )
+            }
+            .graphicsLayer { alpha = 1f - progress.value }
     )
 }
