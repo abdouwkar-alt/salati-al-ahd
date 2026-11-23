@@ -122,7 +122,8 @@ fun QuranReaderSection(
     context: Context,
     onPositionSelected: (Int, String, Int) -> Unit,
     verseByVerse: Boolean = false,
-    showSearch: Boolean = true
+    showSearch: Boolean = true,
+    onSessionStart: ((Int, String, Int) -> Unit)? = null
 ) {
     var surahs by remember { mutableStateOf<List<QuranSurahData>>(emptyList()) }
     var selectedNumber by remember { mutableIntStateOf(prefs.getInt("quran_surah_number", 2).coerceIn(1, 114)) }
@@ -218,6 +219,11 @@ fun QuranReaderSection(
                                 Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                     Text("الآية ${ayah.number} من ${current.ayahs.size}", color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
                                     Text(ayah.text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                                }
+                            }
+                            if (onSessionStart != null) {
+                                OutlinedButton(onClick = { onSessionStart(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("بدء القراءة من الآية الحالية")
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
