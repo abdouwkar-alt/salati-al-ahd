@@ -44,7 +44,7 @@ private val Green = Color(0xFF164B3A)
 private val Cream = Color(0xFFF6F2E9)
 private val PaleGreen = Color(0xFFE5EBDD)
 private val PrayerNames = listOf("الفجر", "الظهر", "العصر", "المغرب", "العشاء")
-private val PrayerStatuses = listOf("لم أسجل بعد", "في الوقت جماعة", "في الوقت منفردًا", "بعد الوقت", "لم أصلِّ")
+private val PrayerStatuses = listOf("لم أسجل بعد", "في الوقت جماعة", "في الوقت منفردًا", "في البيت", "قضاء", "بعد الوقت", "لم أصلِّ")
 
 class MainActivity : ComponentActivity() {
     private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { getLocationAndSchedule(); PrayerNotifications.scheduleGazaReminder(this) }
@@ -413,6 +413,14 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         }
                     }
                 }
+            } else if (mainTab == "القضاء" && !QadaReadiness.isUnlocked(prefs, today)) {
+                item {
+                    QadaReadinessScreen(
+                        prefs = prefs,
+                        today = today,
+                        onBack = { mainTab = "الصلاة" }
+                    )
+                }
             } else if (mainTab == "القضاء" && calculatorView == "الحاسبة" && !qadaNoticeAccepted) {
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
@@ -749,6 +757,21 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     SunnahItem("إطالة القيام والقراءة بحسب الاستطاعة", "هدي نبوي", "كان النبي ﷺ يطيل القيام والقراءة، ويشرع للمسلم أن يصلي ما تيسر له دون تكلف.", "صحيح البخاري 1135؛ صحيح مسلم 738"),
                     SunnahItem("القنوت في الوتر", "دعاء ثابت", "ورد دعاء: اللهم اهدني فيمن هديت، وعافني فيمن عافيت، وتولني فيمن توليت...", "سنن أبي داود 1425؛ جامع الترمذي 464، صححه أهل العلم")
                 )) }
+                item {
+                    Text("المصحف داخل قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                    QuranReaderSection(prefs = prefs, context = context) { surahNumber, surahName, ayahNumber ->
+                        val dayKey = "qiyam_verses_" + today
+                        val old = prefs.getInt(dayKey, 0)
+                        val lastSurah = prefs.getInt("qiyam_session_surah_" + today, -1)
+                        val counted = if (lastSurah == surahNumber) maxOf(old, ayahNumber) else old + ayahNumber
+                        prefs.edit()
+                            .putInt(dayKey, counted)
+                            .putInt("qiyam_session_surah_" + today, surahNumber)
+                            .putInt("qiyam_session_ayah_" + today, ayahNumber)
+                            .putString("qiyam_session_surah_name_" + today, surahName)
+                            .apply()
+                    }
+                }
                 item { QiyamTrackerScreen(prefs = prefs) }
             } else if (mainTab == "الإحصائيات") {
                 item {
