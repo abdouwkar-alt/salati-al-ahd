@@ -128,7 +128,8 @@ fun QuranReaderSection(
     onPositionSelected: (Int, String, Int) -> Unit,
     verseByVerse: Boolean = false,
     showSearch: Boolean = true,
-    onSessionStart: ((Int, String, Int) -> Unit)? = null
+    onSessionStart: ((Int, String, Int) -> Unit)? = null,
+    onSessionFinish: (() -> Unit)? = null
 ) {
     var surahs by remember { mutableStateOf<List<QuranSurahData>>(emptyList()) }
     var selectedNumber by remember { mutableIntStateOf(prefs.getInt("quran_surah_number", 2).coerceIn(1, 114)) }
@@ -141,6 +142,7 @@ fun QuranReaderSection(
     var readerOpen by remember { mutableStateOf(false) }
     var readingTheme by remember { mutableStateOf(prefs.getString("qiyam_reader_theme", "dark") ?: "dark") }
     var dragDistance by remember { mutableFloatStateOf(0f) }
+    var readAyahKeys by remember { mutableStateOf(prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.toSet() ?: emptySet()) }
 
     fun load(force: Boolean = false) {
         scope.launch {
@@ -258,6 +260,8 @@ fun QuranReaderSection(
                             }
                         }
                         Button(onClick = {
+                            readAyahKeys = setOf("${current.number}:${selectedAyah}")
+                            prefs.edit().putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
                             onSessionStart?.invoke(current.number, current.name, selectedAyah)
                             readerOpen = true
                         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A))) {
@@ -316,16 +320,17 @@ fun QuranReaderSection(
                             detectHorizontalDragGestures(
                                 onHorizontalDrag = { _, amount -> dragDistance += amount },
                                 onDragEnd = {
-                                    if (dragDistance < -55f) {
+                                    if (dragDistance > 55f) {
                                         if (activeSurah != null && selectedAyah < activeSurah.ayahs.size) selectedAyah++
                                         else if (selectedNumber < 114) { selectedNumber++; selectedAyah = 1 }
-                                    } else if (dragDistance > 55f) {
+                                    } else if (dragDistance < -55f) {
                                         if (selectedAyah > 1) selectedAyah--
                                         else if (selectedNumber > 1) { selectedNumber--; selectedAyah = surahs.firstOrNull { it.number == selectedNumber }?.ayahs?.size ?: 1 }
                                     }
                                     dragDistance = 0f
                                     val name = surahs.firstOrNull { it.number == selectedNumber }?.name.orEmpty()
-                                    prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", name).putString("quran_ayah", selectedAyah.toString()).apply()
+                                    readAyahKeys = readAyahKeys + "${selectedNumber}:${selectedAyah}"
+                                    prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", name).putString("quran_ayah", selectedAyah.toString()).putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
                                     onPositionSelected(selectedNumber, name, selectedAyah)
                                 }
                             )
@@ -342,6 +347,7 @@ fun QuranReaderSection(
                     Button(onClick = {
                         prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
                         readerOpen = false
+                        onSessionFinish?.invoke()
                     }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black)) {
                         Text("إغلاق المصحف")
                     }
