@@ -807,13 +807,13 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         },
                         onPositionSelected = { surahNumber, surahName, ayahNumber ->
                             val global = quranGlobalAyahIndex(surahNumber, ayahNumber)
-                            val start = prefs.getInt("qiyam_active_start", -1)
-                            val sessionVerses = if (start < 0) 0 else (global - start + 1).coerceAtLeast(0)
-                            prefs.edit().putInt("qiyam_active_end", global).putInt("qiyam_active_verses", sessionVerses)
+                            val uniqueReadCount = prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.size ?: 1
+                            prefs.edit().putInt("qiyam_active_end", global).putInt("qiyam_active_verses", uniqueReadCount)
                                 .putInt("qiyam_active_end_surah", surahNumber).putInt("qiyam_active_end_ayah", ayahNumber)
                                 .putString("qiyam_active_end_surah_name", surahName).apply()
                             qiyamRefresh++
-                        }
+                        },
+                        onSessionFinish = { navigateTo("قيام_إنهاء") }
                     )
                 }
             } else if (mainTab == "الإحصائيات") {
