@@ -1026,7 +1026,7 @@ private fun QuranReflectionScreen(prefs: android.content.SharedPreferences, cont
             )
         }
         if (quranSection == "المصحف") {
-            QuranReaderSection(prefs = prefs, context = context) { surahNumber, surahName, ayahNumber ->
+            QuranReaderSection(prefs = prefs, context = context, onPositionSelected = { surahNumber, surahName, ayahNumber ->
                 currentSurah = surahName
                 currentAyah = ayahNumber.toString()
                 sessionSurah = surahName
@@ -1035,6 +1035,7 @@ private fun QuranReflectionScreen(prefs: android.content.SharedPreferences, cont
                     .putString("quran_surah", surahName)
                     .putString("quran_ayah", ayahNumber.toString()).apply()
             }
+            })
         } else {
         Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
