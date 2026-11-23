@@ -286,7 +286,19 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         onOpen = { section, destination, subTab ->
                             activeSection = section
                             mainTab = destination
-                            sectionSubTab = subTab
+                            sectionSubTab = subTab.ifBlank {
+                                when (section) {
+                                    "الصلاة" -> "الصلاة المفروضة"
+                                    "الصوم" -> "الصيام"
+                                    "الأذكار" -> "مكتبة الأذكار"
+                                    "الدعاء" -> "مكتبة الأدعية"
+                                    "سنن الرسول ﷺ" -> "سنن الصلاة"
+                                    "تدبر القرآن" -> "المصحف والتدبر"
+                                    "التفكر" -> "التفكر"
+                                    "التفقه" -> "فقه الصلاة"
+                                    else -> ""
+                                }
+                            }
                         }
                     )
                 }
