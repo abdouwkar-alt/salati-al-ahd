@@ -1,7 +1,9 @@
-name: Android APK
+name: Android CI
 on:
   push:
-    branches: [ main, salati-app ]
+    branches: [ main, "release/**" ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,9 +19,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+      - name: Run Android lint
+        run: gradle lintDebug
       - name: Build debug APK
         run: gradle assembleDebug
-      - name: Upload APK
+      - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
           name: salati-debug-apk
