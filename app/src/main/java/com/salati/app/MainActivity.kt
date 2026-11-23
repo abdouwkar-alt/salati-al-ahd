@@ -793,15 +793,6 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 }
             } else if (mainTab == "قيام_الجلسة") {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
-                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("مصحف قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                            Text("اختر السورة، ثم اقرأ بتدبر وطمأنينة. يمكنك التوقف للركوع وحفظ موضعك، أو إنهاء القراءة للانتقال إلى تسجيل الصلاة.")
-                        }
-                    }
-                    Button(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("إنهاء القراءة") }
-                }
-                item {
                     QuranReaderSection(
                         prefs = prefs, context = context, verseByVerse = true, showSearch = false,
                         onSessionStart = { surahNumber, surahName, ayahNumber ->
