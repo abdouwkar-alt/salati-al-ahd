@@ -392,7 +392,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                                         }
                                                     }
                                                 }
-                                                TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن" }) {
+                                                TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن_الصلوات" }) {
                                                     Text("السنن والأحاديث", style = MaterialTheme.typography.labelSmall)
                                                 }
                                             }
@@ -614,7 +614,11 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         }
                     }
                 }
+            } else if (mainTab == "السنن_الصلوات") {
+                item { PrayerVirtuesLearningScreen() }
             } else if (mainTab == "السنن") {
+                item { NawafilLearningScreen() }
+            } else if (mainTab == "النوافل") {
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
