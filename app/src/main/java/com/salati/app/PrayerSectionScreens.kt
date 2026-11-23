@@ -21,7 +21,7 @@ fun quranGlobalAyahIndex(surah: Int, ayah: Int): Int {
 }
 
 @Composable
-fun PrayerTopicLearningScreen(prayer: String, isFard: Boolean) {
+fun PrayerTopicLearningScreen(prayer: String, isFard: Boolean, prefs: SharedPreferences) {
     val names = mapOf("الفجر" to "الفجر", "الظهر" to "الظهر", "العصر" to "العصر", "المغرب" to "المغرب", "العشاء" to "العشاء", "الضحى" to "الضحى")
     val title = names[prayer] ?: prayer
     val entries = when (title) {
@@ -75,6 +75,18 @@ fun PrayerTopicLearningScreen(prayer: String, isFard: Boolean) {
             extra.forEach { LearningEvidenceCard(it.first, it.second, it.third) }
         }
         entries.forEach { LearningEvidenceCard(it.first, it.second, it.third) }
+        if (isFard) {
+            Text("الأذكار بعد الصلاة", color = SectionGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text("العداد يزيد بلمسة واحدة، ويمكنك التراجع أو تصفيره.")
+            PrayerDhikrCounter(prefs, "post_prayer_istighfar", "الاستغفار", "أَسْتَغْفِرُ اللهَ", 3, "ثلاث مرات بعد الصلاة المكتوبة", "صحيح مسلم (591)")
+            PrayerDhikrCounter(prefs, "post_prayer_salam", "دعاء السلام", "اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ", 1, "مرة واحدة بعد الصلاة المكتوبة", "صحيح مسلم (591)")
+            PrayerDhikrCounter(prefs, "post_prayer_subhan", "التسبيح", "سُبْحَانَ اللهِ", 33, "ثلاث وثلاثون مرة", "صحيح مسلم (596)")
+            PrayerDhikrCounter(prefs, "post_prayer_hamd", "التحميد", "الْحَمْدُ لِلَّهِ", 33, "ثلاث وثلاثون مرة", "صحيح مسلم (596)")
+            PrayerDhikrCounter(prefs, "post_prayer_takbir", "التكبير", "اللهُ أَكْبَرُ", 34, "أربع وثلاثون مرة", "صحيح مسلم (596)")
+        } else {
+            Text("لا يثبت دعاء مخصوص بعد كل نافلة بعينها. يمكنك الدعاء بما شئت وقراءة الأذكار العامة دون اعتقاد عدد مخصوص لهذه النافلة.")
+            PrayerDhikrCounter(prefs, "nafl_general_dhikr", "ذكر عام اختياري", "سُبْحَانَ اللهِ وَبِحَمْدِهِ", 100, "عداد اختياري، وليس عددًا مخصوصًا بهذه النافلة", "ورد فضل المائة في أحاديث صحيحة")
+        }
         Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text("التيسير والمداومة", color = SectionGreen, fontWeight = FontWeight.Bold)
@@ -166,6 +178,49 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
             }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) { Text("حفظ الجلسة") }
         } else {
             Text("تم حفظ الجلسة.")
+        }
+    }
+}
+
+
+@Composable
+private fun PrayerDhikrCounter(prefs: SharedPreferences, key: String, title: String, phrase: String, target: Int, note: String, source: String) {
+    var count by remember(key) { mutableIntStateOf(prefs.getInt(key, 0).coerceAtLeast(0)) }
+    Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, color = SectionGreen, fontWeight = FontWeight.Bold)
+            Text(phrase, style = MaterialTheme.typography.titleMedium)
+            Text("$count / $target", color = SectionGreen, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { count++; prefs.edit().putInt(key, count).apply() }, colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) { Text("+1") }
+                OutlinedButton(onClick = { count = (count - 1).coerceAtLeast(0); prefs.edit().putInt(key, count).apply() }) { Text("تراجع") }
+                TextButton(onClick = { count = 0; prefs.edit().putInt(key, 0).apply() }) { Text("تصفير") }
+            }
+            Text(note, style = MaterialTheme.typography.bodySmall)
+            Text(source, color = Color.Gray, style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+fun QiyamHistoryScreen(prefs: SharedPreferences) {
+    val history = remember { mutableStateListOf<org.json.JSONObject>().apply {
+        val data = try { org.json.JSONArray(prefs.getString("qiyam_session_history", "[]")) } catch (_: Exception) { org.json.JSONArray() }
+        for (i in data.length() - 1 downTo 0) data.optJSONObject(i)?.let { add(it) }
+    } }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("سجل قيام الليل", color = SectionGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+        if (history.isEmpty()) Text("لم تسجل جلسات بعد. بعد إنهاء أول جلسة ستظهر تفاصيلها هنا.")
+        else history.forEachIndexed { index, entry ->
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text("جلسة ${history.size - index} — ${entry.optString("date")}", color = SectionGreen, fontWeight = FontWeight.Bold)
+                    Text("السورة: ${entry.optString("surah", "غير محدد")}")
+                    Text("من الآية ${entry.optInt("fromAyah")} إلى ${entry.optInt("toAyah")} — التوقف عند ${entry.optInt("stopAyah")}")
+                    Text("إجمالي الآيات: ${entry.optInt("verses")} | الركعات: ${entry.optInt("rakats")} | الوتر: ${if (entry.optBoolean("witr")) "نعم" else "لا"}")
+                    if (entry.optString("reflection").isNotBlank()) Text("ملاحظتك: ${entry.optString("reflection")}")
+                }
+            }
         }
     }
 }
