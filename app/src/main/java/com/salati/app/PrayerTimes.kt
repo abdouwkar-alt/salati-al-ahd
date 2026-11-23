@@ -41,4 +41,12 @@ object PrayerTimes {
   }
   return listOf(PrayerTime("الفجر",millis(fajr)),PrayerTime("الظهر",millis(dhuhr)),PrayerTime("العصر",millis(asr)),PrayerTime("المغرب",millis(maghrib)),PrayerTime("العشاء",millis(isha)))
  }
+ fun duhaStartTime(date:LocalDate,lat:Double,lon:Double,zone:ZoneId):Long {
+  val (dec,eq)=sun(jd(date)+0.5)
+  val offset=zone.rules.getOffset(date.atTime(12,0).atZone(zone).toInstant()).totalSeconds/3600.0
+  val noon=12.0+offset-lon/15.0-eq
+  val sunrise=noon-hourAngle(lat,dec,-0.833)
+  val minutes=((sunrise+0.25)*60.0).roundToInt()
+  return date.atStartOfDay(zone).toInstant().toEpochMilli()+minutes*60_000L
+ }
 }
