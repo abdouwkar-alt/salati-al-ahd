@@ -287,7 +287,13 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 })
             }
         } else {
-        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        androidx.activity.compose.BackHandler(enabled = mainTab != "الرئيسية") {
+            mainTab = "الرئيسية"
+            activeSection = "البداية"
+            sectionSubTab = ""
+        }
+        Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
@@ -828,21 +834,20 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     else -> item { GuideCard("السنن العملية", SunnahGuide.home + SunnahGuide.waking + SunnahGuide.sleep + SunnahGuide.food) }
                 }
             }
-            item {
-                BottomNavigationBar(
-                    selected = activeSection,
-                    onSelect = { destination ->
-                        activeSection = destination
-                        mainTab = when (destination) {
-                            "البداية" -> "الرئيسية"
-                            "الإحصائيات" -> "الإحصائيات"
-                            else -> "الإعدادات"
-                        }
-                    }
-                )
-            }
             item { Spacer(Modifier.height(12.dp)) }
         }
+        BottomNavigationBar(
+            selected = activeSection,
+            onSelect = { destination ->
+                activeSection = destination
+                mainTab = when (destination) {
+                    "البداية" -> "الرئيسية"
+                    "الإحصائيات" -> "الإحصائيات"
+                    else -> "الإعدادات"
+                }
+                sectionSubTab = ""
+            }
+        )
         }
         dhikrBursts.forEach { burst ->
             DhikrBurstLabel(burst = burst, onFinished = { dhikrBursts.remove(burst) })
