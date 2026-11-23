@@ -362,7 +362,7 @@ fun SectionNavigation(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("الصلاة جامعة", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text("﴿وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ﴾", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                    Text("﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَوْقُوتًا﴾", color = Color.White, style = MaterialTheme.typography.titleMedium)
                     Text("البقرة: 45", color = Color.White.copy(alpha = 0.78f), style = MaterialTheme.typography.labelSmall)
                 }
             }
