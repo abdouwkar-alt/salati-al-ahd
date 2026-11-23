@@ -97,7 +97,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
         val doorHeight = (maxHeight * .085f).coerceIn(42.dp, 50.dp)
         val doorWidth = (maxWidth * .205f).coerceIn(64.dp, 76.dp)
         val points = buildList {
-            add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .055f))
+            add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .105f))
             doors.forEach { add(androidx.compose.ui.geometry.Offset(widthPx * it.x, heightPx * it.y)) }
             add(androidx.compose.ui.geometry.Offset(widthPx * prayerX, heightPx * prayerY))
         }
@@ -162,7 +162,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
         }
         androidx.compose.foundation.Canvas(
             Modifier.offset {
-                val p = if (selected.intValue >= 0) walkerPoint else androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .055f)
+                val p = if (selected.intValue >= 0) walkerPoint else androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .105f)
                 androidx.compose.ui.unit.IntOffset((p.x - with(density) { 12.dp.toPx() }).roundToInt(), (p.y - with(density) { 22.dp.toPx() }).roundToInt())
             }.size(24.dp, 44.dp)
         ) {
