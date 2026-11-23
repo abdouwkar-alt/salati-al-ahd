@@ -25,6 +25,8 @@ jobs:
         run: gradle lintDebug
       - name: Build debug APK
         run: gradle assembleDebug
+      - name: Build unsigned release variant for compile validation
+        run: gradle assembleRelease
       - name: Upload test APK and license report
         uses: actions/upload-artifact@v4
         with:
