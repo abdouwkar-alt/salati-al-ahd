@@ -329,12 +329,24 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 }
             } else if (mainTab == "الصلاة") {
                 item {
+                    val upcomingReminder = when (nextPrayer.name) {
+                        "الفجر" -> "مَن صلَّى الصبحَ فهو في ذمَّةِ الله." to "صحيح مسلم (657)"
+                        "الظهر" -> "إذا اشتدَّ الحرُّ فأبرِدوا بالصلاة؛ فإن شدة الحر من فيح جهنم." to "صحيح البخاري (536)، وصحيح مسلم (616)"
+                        "العصر" -> "مَن ترك صلاةَ العصرِ فقد حَبِطَ عملُه." to "صحيح البخاري (553)"
+                        "المغرب" -> "لا تزال أمتي بخيرٍ ما عجَّلوا المغرب." to "سنن أبي داود (418)، وجامع الترمذي (172)"
+                        "العشاء" -> "إن أثقلَ صلاةٍ على المنافقين صلاةُ العشاء وصلاةُ الفجر." to "صحيح البخاري (657)، وصحيح مسلم (651)"
+                        else -> "اللهم أعنِّي على ذكرك وشكرك وحسن عبادتك." to "سنن أبي داود (1522)"
+                    }
                     Card(colors = CardDefaults.cardColors(containerColor = Green)) {
-                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                             Text("الصلاة القادمة", color = Color.White.copy(alpha = 0.85f))
                             Text(nextPrayer.name, color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                             Text(Instant.ofEpochMilli(nextPrayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter), color = Color.White)
                             Text("متبقي " + countdown, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.28f))
+                            Text("تذكير قبل الصلاة", color = Color.White.copy(alpha = 0.82f), style = MaterialTheme.typography.labelMedium)
+                            Text("«" + upcomingReminder.first + "»", color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                            Text(upcomingReminder.second, color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -345,14 +357,6 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                             Text(today.format(dateFormatter), color = Color(0xFF6D716A))
                             todayTimes.forEach { prayer ->
                                 var expanded by remember(today, prayer.name) { mutableStateOf(false) }
-                                val prayerHadith = when (prayer.name) {
-                                    "الفجر" -> "مَن صلَّى الصبحَ فهو في ذمَّةِ الله." to "صحيح مسلم (657)"
-                                    "الظهر" -> "إذا اشتدَّ الحرُّ فأبرِدوا بالصلاة؛ فإن شدة الحر من فيح جهنم." to "صحيح البخاري (536)، وصحيح مسلم (616)"
-                                    "العصر" -> "مَن ترك صلاةَ العصرِ فقد حَبِطَ عملُه." to "صحيح البخاري (553)"
-                                    "المغرب" -> "لا تزال أمتي بخيرٍ ما عجَّلوا المغرب." to "سنن أبي داود (418)، وجامع الترمذي (172)"
-                                    "العشاء" -> "إن أثقلَ صلاةٍ على المنافقين صلاةُ العشاء وصلاةُ الفجر." to "صحيح البخاري (657)، وصحيح مسلم (651)"
-                                    else -> "" to ""
-                                }
                                 Column(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                         Text(prayer.name, fontWeight = FontWeight.SemiBold)
@@ -391,37 +395,6 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                             }
                                         }
                                     }
-                                    if (prayerHadith.first.isNotBlank()) {
-                                        Text("«" + prayerHadith.first + "»", color = Green, style = MaterialTheme.typography.bodyMedium)
-                                        Text(prayerHadith.second, color = Color(0xFF77736B), style = MaterialTheme.typography.labelSmall)
-                                    }
-                                }
-                                HorizontalDivider(color = Color(0xFFD4DDCE))
-                                if (prayer.name == "الفجر") {
-                                    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                Text("الضحى", fontWeight = FontWeight.SemiBold)
-                                                Text("نافلة — ليست صلاة موقوتة بأذان", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D716A))
-                                            }
-                                            Column(horizontalAlignment = Alignment.End) {
-                                                Text(Instant.ofEpochMilli(duhaStartTime).atZone(ZoneId.systemDefault()).format(timeFormatter))
-                                                Text(if (duhaDone) "تم تسجيلها اليوم" else "لم تسجل اليوم", style = MaterialTheme.typography.bodySmall, color = Green)
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    TextButton(onClick = {
-                                                        duhaDone = !duhaDone
-                                                        actionFeedback = "أستغفر الله"
-                                                        prefs.edit().putBoolean("duha_" + today, duhaDone).apply()
-                                                    }) { Text(if (duhaDone) "تراجع" else "سجل الضحى", style = MaterialTheme.typography.labelSmall) }
-                                                    TextButton(onClick = { selectedPrayerGuide = "الضحى"; sunnahTab = "سنن الصلاة"; mainTab = "السنن" }) {
-                                                        Text("السنن والأحاديث", style = MaterialTheme.typography.labelSmall)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Text("يُجزئ عن كل ذلك ركعتان يركعهما من الضحى.", color = Green, style = MaterialTheme.typography.bodyMedium)
-                                        Text("صحيح مسلم (720) — حديث أبي ذر في صدقة مفاصل الإنسان.", color = Color(0xFF77736B), style = MaterialTheme.typography.labelSmall)
-                                    }
                                     HorizontalDivider(color = Color(0xFFD4DDCE))
                                 }
                                 if (prayer.name == "العشاء") {
@@ -435,16 +408,6 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                 }
                             }
                             Text("المواقيت محسوبة محليًا بطريقة تقريبية؛ راجعها مع التقويم الرسمي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
-                        }
-                    }
-                }
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(14.dp)) {
-                            Text("رصيدك الحالي", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
-                            Text(if (prayerBase < 0) "ابدأ من الحاسبة لتحديد رصيدك." else "قضاء الصلاة: " + prayerRemaining + " فرض")
-                            Text(if (fastBase < 0) "لم يتم حساب قضاء الصيام بعد." else "قضاء الصيام: " + fastRemaining + " يوم")
-                            TextButton(onClick = { calculatorView = "الحاسبة"; mainTab = "القضاء" }) { Text("ابدأ الحاسبة") }
                         }
                     }
                 }
