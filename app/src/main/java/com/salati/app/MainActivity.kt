@@ -305,7 +305,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     SectionNavigation(
                         section = when {
                             activeSection == "الصلاة" && mainTab == "بوابة_الصلاة" -> "الصلاة"
-                            activeSection == "الصلاة" && (mainTab == "الصلاة" || mainTab.startsWith("فرض_")) -> "فرض"
+                            activeSection == "الصلاة" && (mainTab == "فرض" || mainTab == "الصلاة" || mainTab.startsWith("فرض_")) -> "فرض"
                             activeSection == "الصلاة" && (mainTab == "النوافل" || mainTab.startsWith("نافلة_")) -> "النوافل"
                             activeSection == "الصلاة" && (mainTab == "قيام الليل" || mainTab.startsWith("قيام_")) -> "قيام الليل"
                             activeSection == "الصلاة" && mainTab.startsWith("القضاء") -> "القضاء"
@@ -314,7 +314,12 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         selected = sectionSubTab,
                         onSelect = { label, destination ->
                             sectionSubTab = label
-                            mainTab = destination
+                            if (destination == "القضاء_الحاسبة") {
+                                mainTab = "القضاء"
+                                calculatorView = "الحاسبة"
+                            } else {
+                                mainTab = destination
+                            }
                         }
                     )
                 }
