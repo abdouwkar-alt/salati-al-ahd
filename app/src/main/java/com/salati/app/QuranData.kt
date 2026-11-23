@@ -261,11 +261,8 @@ fun QuranReaderSection(
                 if (current != null) {
                     if (verseByVerse) {
                         Text("اختر موضع البداية، ثم اختر مظهر المصحف قبل القراءة.", color = Color(0xFF555B54))
-                        Text("السورة", fontWeight = FontWeight.SemiBold, color = Color(0xFF164B3A))
+                        Text("موضع البداية", fontWeight = FontWeight.SemiBold, color = Color(0xFF164B3A))
                         Text("الآية: $selectedAyah (اتركها كما هي للبدء من أول السورة، أو اختر رقمًا)", style = MaterialTheme.typography.bodyMedium)
-                        OutlinedButton(onClick = { menuExpanded = true }, modifier = Modifier.fillMaxWidth()) {
-                            Text("اختيار السورة: ${current.name}")
-                        }
                         var ayahMenuExpanded by remember { mutableStateOf(false) }
                         OutlinedButton(onClick = { ayahMenuExpanded = true }, modifier = Modifier.fillMaxWidth()) {
                             Text("اختيار الآية: $selectedAyah")
