@@ -132,6 +132,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var prayerBase by remember { mutableIntStateOf(prefs.getInt("prayer_base", -1)) }
     var fastBase by remember { mutableIntStateOf(prefs.getInt("fast_base", -1)) }
     var mainTab by remember { mutableStateOf("الرئيسية") }
+    var activeSection by remember { mutableStateOf("البداية") }
+    var sectionSubTab by remember { mutableStateOf("") }
     var calculatorView by remember { mutableStateOf("الحاسبة") }
     var selectedPrayerGuide by remember { mutableStateOf("الفجر") }
     var sunnahTab by remember { mutableStateOf("سنن الصلاة") }
@@ -233,67 +235,47 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
-            item {
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("الرئيسية", "الصلاة", "السنن", "قيام الليل", "الصوم", "القضاء", "الإحصائيات", "الأذكار", "الأدعية", "فقه الوضوء", "فقه الصلاة", "تدبر القرآن", "الإعدادات").forEach { tab ->
-                        FilterChip(selected = mainTab == tab, onClick = { mainTab = tab }, label = { Text(tab) })
-                    }
+            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات") {
+                item {
+                    SectionNavigation(
+                        section = activeSection,
+                        selected = sectionSubTab,
+                        onSelect = { label, destination ->
+                            sectionSubTab = label
+                            mainTab = destination
+                        }
+                    )
                 }
+                item { SectionSketch(section = activeSection) }
             }
 
             if (mainTab == "الرئيسية") {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = Green)) {
-                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("الصَّلَاةُ جَامِعَةٌ", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                            Text(today.format(dateFormatter), color = Color.White.copy(alpha = 0.85f))
-                            Text("الصلاة القادمة: " + nextPrayer.name + " — " + Instant.ofEpochMilli(nextPrayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter), color = Color.White)
-                            Text("متبقي " + countdown, color = Color.White, fontWeight = FontWeight.SemiBold)
+                    HomeDashboard(
+                        dateText = today.format(dateFormatter),
+                        onOpen = { section, destination, subTab ->
+                            activeSection = section
+                            mainTab = destination
+                            sectionSubTab = subTab
                         }
-                    }
+                    )
                 }
-                item { Text("أعمال اليوم", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold) }
+            } else if (mainTab == "الإنفاق") {
                 item {
-                    Card(onClick = { mainTab = "الصلاة" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("الصلاة المفروضة", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("مواقيت الفجر والظهر والعصر والمغرب والعشاء، وتسجيل أداء كل صلاة")
-                        }
-                    }
+                    SectionPlaceholder(
+                        title = "الإنفاق",
+                        subtitle = "الزكاة والصدقة والإنفاق في وجوه الخير",
+                        detail = "هذا القسم مبدئي. سنبني حاسبة الزكاة ومتابعة الصدقات بعد تحديد الضوابط والمصادر الشرعية وطريقة الحساب."
+                    )
                 }
+            } else if (mainTab == "التفكر") {
                 item {
-                    Card(onClick = { mainTab = "السنن" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("السنن الرواتب والضحى", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("متابعة ركعات السنن اليومية والضحى")
-                        }
-                    }
+                    SectionPlaceholder(
+                        title = "التفكر",
+                        subtitle = "التفكر في آيات الله ومحاسبة النفس",
+                        detail = "مساحة لتدوين الخواطر والأسئلة والتأملات، مع الفصل بين نص الآية والتفسير والتأمل الشخصي."
+                    )
                 }
-                item {
-                    Card(onClick = { mainTab = "قيام الليل" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text(nightWindow + " — تسجيل القيام والقراءة")
-                        }
-                    }
-                }
-                item {
-                    Card(onClick = { mainTab = "الصوم" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("الصوم", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("رمضان، شوال، صيام التطوع، والأيام الفائتة")
-                        }
-                    }
-                }
-                item {
-                    Card(onClick = { mainTab = "القضاء" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("الفوائت والقضاء", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text("متابعة رصيد الصلوات والصيام الفائت")
-                        }
-                    }
-                }
-                item { Text("كل التسجيلات والإحصائيات في هذا الإصدار تحفظ على جهازك فقط.", color = Color(0xFF6D716A), style = MaterialTheme.typography.bodySmall) }
             } else if (mainTab == "الصلاة") {
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = Green)) {
@@ -800,6 +782,19 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     }
                     else -> item { GuideCard("السنن العملية", SunnahGuide.home + SunnahGuide.waking + SunnahGuide.sleep + SunnahGuide.food) }
                 }
+            }
+            item {
+                BottomNavigationBar(
+                    selected = activeSection,
+                    onSelect = { destination ->
+                        activeSection = destination
+                        mainTab = when (destination) {
+                            "البداية" -> "الرئيسية"
+                            "الإحصائيات" -> "الإحصائيات"
+                            else -> "الإعدادات"
+                        }
+                    }
+                )
             }
             item { Spacer(Modifier.height(12.dp)) }
         }
