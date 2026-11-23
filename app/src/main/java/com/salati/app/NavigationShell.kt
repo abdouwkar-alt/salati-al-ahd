@@ -342,7 +342,7 @@ fun SectionNavigation(
     onSelect: (label: String, destination: String) -> Unit
 ) {
     val options = when (section) {
-        "الصلاة" -> listOf("الصلاة المفروضة" to "الصلاة", "السنن والرواتب" to "السنن", "قيام الليل" to "قيام الليل", "القضاء" to "القضاء")
+        "الصلاة" -> listOf("الصلاة المفروضة" to "الصلاة", "النوافل" to "السنن", "قيام الليل" to "قيام الليل", "القضاء" to "القضاء")
         "الصوم" -> listOf("الصيام" to "الصوم", "قضاء الصيام" to "القضاء")
         "الأذكار" -> listOf("مكتبة الأذكار" to "الأذكار")
         "الدعاء" -> listOf("مكتبة الأدعية" to "الأدعية")
@@ -353,15 +353,49 @@ fun SectionNavigation(
         "التفقه" -> listOf("فقه الوضوء" to "فقه الوضوء", "فقه الصلاة" to "فقه الصلاة")
         else -> emptyList()
     }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(section, color = ShellGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            options.forEach { (label, destination) ->
-                FilterChip(
-                    selected = selected == label || (selected.isBlank() && options.firstOrNull()?.first == label),
-                    onClick = { onSelect(label, destination) },
-                    label = { Text(label, maxLines = 1) }
-                )
+    if (section == "الصلاة") {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Card(colors = CardDefaults.cardColors(containerColor = ShellGreen), shape = RoundedCornerShape(18.dp)) {
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("الصلاة جامعة", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("﴿وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ﴾", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                    Text("البقرة: 45", color = Color.White.copy(alpha = 0.78f), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            options.chunked(2).forEach { rowOptions ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    rowOptions.forEach { (label, destination) ->
+                        val active = selected == label || (selected.isBlank() && options.firstOrNull()?.first == label)
+                        Surface(
+                            modifier = Modifier.weight(1f).heightIn(min = 64.dp).clickable { onSelect(label, destination) },
+                            color = if (active) ShellGreen else Color(0xFFEAE5D9),
+                            shape = RoundedCornerShape(28.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (active) ShellGreen else ShellLine)
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 8.dp, vertical = 14.dp)) {
+                                Text(label, color = if (active) Color.White else ShellGreen, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+                            }
+                        }
+                    }
+                    if (rowOptions.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(section, color = ShellGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                options.forEach { (label, destination) ->
+                    FilterChip(
+                        selected = selected == label || (selected.isBlank() && options.firstOrNull()?.first == label),
+                        onClick = { onSelect(label, destination) },
+                        label = { Text(label, maxLines = 1) }
+                    )
+                }
             }
         }
     }
