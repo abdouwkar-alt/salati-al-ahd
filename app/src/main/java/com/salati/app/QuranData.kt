@@ -354,7 +354,6 @@ fun QuranReaderSection(
                     Button(onClick = {
                         prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
                         readerOpen = false
-                        meaningVisible = false
                         onSessionFinish?.invoke()
                     }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black)) {
                         Text("إغلاق المصحف")
