@@ -1,42 +1,44 @@
-# Release preparation checklist
+# Public Android release checklist
 
-## Current status
-
+## Release identity
 - Repository: `abdouwkar-alt/salati-al-ahd`
-- App display name: `الصَّلَاةُ جَامِعَةٌ`
-- Repository name: `salati-al-ahd`
-- Current migration: Android source and project documentation imported from `hibrah-marketing/salati-app`.
-- Current workflow builds a **debug APK** only. It is not a signed public release.
+- Package ID: `com.salati.app` — keep stable for all updates.
+- Current prepared version: `1.3.0`, versionCode `4`.
+- Public downloads are published as GitHub Release assets, not short-lived Actions artifacts.
 
-## Before publishing
+## Signing and data continuity
+- [ ] Create one long-lived Android release keystore.
+- [ ] Store it securely offline in at least two protected locations.
+- [ ] Configure GitHub Actions secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+- [ ] Never commit the keystore or passwords.
+- [ ] Keep the same release keystore and alias for every future update. Android accepts an in-place update only when the package ID and signing certificate match.
+- [ ] Existing debug builds may have a different signing certificate. Before moving from a debug APK to the first release APK, export the in-app JSON backup, install the signed release, then restore the backup. Do not uninstall before exporting.
+- [ ] Test an in-place update from one signed release to the next and verify prayer records, qada progress, settings, and journal entries remain.
 
-- [ ] Decide the Android application ID and confirm it will not change after release.
-- [ ] Choose a version name and monotonically increasing version code.
-- [ ] Configure a release signing key locally; keep the keystore and passwords out of Git.
-- [ ] Store signing material only in GitHub Actions Secrets if building signed releases in CI.
-- [ ] Add a dedicated release workflow that builds `assembleRelease`, signs the APK, and verifies the signature.
-- [ ] Test the signed APK on real devices.
-- [ ] Review app permissions, dependency tree, privacy behavior, and Android backup rules.
-- [ ] Confirm third-party API/data attribution and terms.
-- [ ] Publish release notes and SHA-256 checksum.
-- [ ] Keep the source tag and binary artifact tied to the same commit.
+## CI and release
+- [ ] Android CI passes on the release-preparation branch and pull request.
+- [ ] Android lint and assembleDebug pass.
+- [ ] Release workflow builds `assembleRelease`, verifies the APK signature, creates a SHA-256 checksum, and publishes the APK to GitHub Releases.
+- [ ] Install and test the signed APK on a real Android device.
+- [ ] Confirm update-check notification permission is granted and that the notification opens the matching GitHub Release.
+- [ ] Verify the tag, release commit, APK version, certificate fingerprint, and SHA-256 checksum all match.
 
-## Signing secrets (names only)
+## Branch protection
+Configure GitHub Settings → Rules → Rulesets (or Branches → Add branch protection rule) for `main`:
+- Require a pull request before merging.
+- Require at least one approval (or require code-owner review).
+- Require the Android CI status check.
+- Require branches to be up to date before merging.
+- Block force pushes and branch deletion.
+- Do not allow bypassing the rules for routine changes.
+The repository includes `.github/CODEOWNERS`; code-owner review only becomes mandatory when the corresponding GitHub rule is enabled.
 
-Suggested GitHub Actions secret names:
-- `ANDROID_KEYSTORE_BASE64`
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
+## Licensing and privacy
+- [ ] Review [LICENSE](../LICENSE) and [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+- [ ] Keep the Quran text unmodified and credit AlQuran Cloud / Islamic Network.
+- [ ] Review the resolved Gradle dependency graph and all transitive notices.
+- [ ] Publish a clear privacy notice covering local prayer/journal data, location, network requests, and unencrypted JSON backups.
+- [ ] Test backup and restore before distribution.
 
-Never commit the keystore, passwords, signing properties, API credentials, or personal data.
-
-## Distribution and verification
-
-Publish APKs only through GitHub Releases for this repository. Provide the release tag, commit, version, signing certificate fingerprint, and SHA-256 checksum. A matching checksum proves that a downloaded file matches the published file; it does not prove that the software is free of vulnerabilities or malicious behavior.
-
-Users can inspect the public source, review the permissions and workflow, compare the release commit, and verify the checksum/signature. Do not claim that this proves the app is completely safe.
-
-## Licensing
-
-The repository uses MIT for original project code. Third-party libraries, Quran text/data, API services, fonts, and artwork may have separate licenses and terms. Inventory and attribute those before public distribution.
+## Update behavior
+The app checks the latest GitHub Release when opened and periodically while the device has network connectivity. If a newer release is available, it posts a notification when Android notification permission is granted. The notification opens the GitHub Release page. Android requires the user to approve installation; the app cannot silently install an APK. Data remains on the device during a normal in-place update signed with the same release key.
