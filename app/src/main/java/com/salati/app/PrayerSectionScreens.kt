@@ -196,7 +196,7 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
 
 @Composable
 private fun PrayerDhikrCounter(prefs: SharedPreferences, key: String, title: String, phrase: String, target: Int, note: String, source: String) {
-    val dailyKey = key + "_" + LocalDate.now().toString()
+    val dailyKey = key + "_" + title + "_" + LocalDate.now().toString()
     var count by remember(dailyKey) { mutableIntStateOf(prefs.getInt(dailyKey, 0).coerceAtLeast(0)) }
     Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
