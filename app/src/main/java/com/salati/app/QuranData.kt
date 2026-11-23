@@ -167,6 +167,7 @@ fun QuranReaderSection(
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(if (verseByVerse) "مصحف قيام الليل" else "مصحف القرآن الكريم", style = MaterialTheme.typography.titleLarge, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
             Text("فهرس السور والآيات بالنص العثماني. اضغط على الآية لتسجيل موضع قراءتك.")
+            Text("مصدر النص العثماني: AlQuran Cloud — Islamic Network.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF56715F))
             if (loading) {
                 LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFF164B3A))
                 Text("يُحمّل النص أو يُقرأ من النسخة المحفوظة على هذا الجهاز…")
