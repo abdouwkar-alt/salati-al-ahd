@@ -29,6 +29,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.delay
 import java.time.*
+import java.time.chrono.HijrahDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -130,7 +131,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var missedSinceInstall by remember { mutableIntStateOf(prefs.getInt("missed_since_install", 0)) }
     var prayerBase by remember { mutableIntStateOf(prefs.getInt("prayer_base", -1)) }
     var fastBase by remember { mutableIntStateOf(prefs.getInt("fast_base", -1)) }
-    var mainTab by remember { mutableStateOf("الصلاة") }
+    var mainTab by remember { mutableStateOf("الرئيسية") }
     var calculatorView by remember { mutableStateOf("الحاسبة") }
     var selectedPrayerGuide by remember { mutableStateOf("الفجر") }
     var sunnahTab by remember { mutableStateOf("سنن الصلاة") }
@@ -142,8 +143,27 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var notifyAt by remember { mutableStateOf(prefs.getBoolean("notify_at", true)) }
     var notifyGaza by remember { mutableStateOf(prefs.getBoolean("notify_gaza", true)) }
     var tasbeehCount by remember { mutableIntStateOf(prefs.getInt("tasbeeh_count", 0)) }
+    var fastSection by remember { mutableStateOf("رمضان") }
+    var fastRamadanCount by remember { mutableIntStateOf(prefs.getInt("fast_ramadan_count", 0)) }
+    var fastShawwalCount by remember { mutableIntStateOf(prefs.getInt("fast_shawwal_count", 0)) }
     LaunchedEffect(Unit) { while (true) { delay(1_000L); clockNow = System.currentTimeMillis() } }
     val today = Instant.ofEpochMilli(clockNow).atZone(ZoneId.systemDefault()).toLocalDate()
+    var duhaDone by remember(today) { mutableStateOf(prefs.getBoolean("duha_" + today, false)) }
+    val sunnahSlots = listOf("قبل الفجر" to 2, "قبل الظهر" to 4, "بعد الظهر" to 2, "بعد المغرب" to 2, "بعد العشاء" to 2)
+    val sunnahDoneBySlot = remember(today) {
+        androidx.compose.runtime.mutableStateMapOf<String, Int>().apply {
+            sunnahSlots.forEach { (slot, _) -> put(slot, prefs.getInt("sunnah_slot_" + today + "_" + slot, 0)) }
+        }
+    }
+    val sunnahRakaatCount = sunnahDoneBySlot.values.sum()
+    var fastLogged by remember(today) { mutableStateOf(prefs.getString("fast_type_" + today, "") ?: "") }
+    var actionFeedback by remember { mutableStateOf("") }
+    LaunchedEffect(actionFeedback) {
+        if (actionFeedback.isNotBlank()) {
+            delay(1_400L)
+            actionFeedback = ""
+        }
+    }
     val tomorrow = today.plusDays(1)
     val lat = prefs.getFloat("lat", 30.0444f).toDouble()
     val lon = prefs.getFloat("lon", 31.2357f).toDouble()
@@ -205,15 +225,71 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 Text("الصَّلَاةُ جَامِعَةٌ", style = MaterialTheme.typography.headlineLarge, color = Green, fontWeight = FontWeight.Bold)
                 Text("\u2067﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَوْقُوتًا﴾ [النساء: 103]\u2069", color = Color(0xFF6D716A))
             }
+            if (actionFeedback.isNotBlank()) {
+                item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
+            }
             item {
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("الصلاة", "الإحصائيات", "الأذكار", "الأدعية", "القضاء", "السنن العملية", "فقه الوضوء", "فقه الصلاة", "تدبر القرآن", "الإعدادات").forEach { tab ->
+                    listOf("الرئيسية", "الصلاة", "السنن", "قيام الليل", "الصوم", "القضاء", "الإحصائيات", "الأذكار", "الأدعية", "فقه الوضوء", "فقه الصلاة", "تدبر القرآن", "الإعدادات").forEach { tab ->
                         FilterChip(selected = mainTab == tab, onClick = { mainTab = tab }, label = { Text(tab) })
                     }
                 }
             }
 
-            if (mainTab == "الصلاة") {
+            if (mainTab == "الرئيسية") {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = Green)) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("الصَّلَاةُ جَامِعَةٌ", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                            Text(today.format(dateFormatter), color = Color.White.copy(alpha = 0.85f))
+                            Text("الصلاة القادمة: " + nextPrayer.name + " — " + Instant.ofEpochMilli(nextPrayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter), color = Color.White)
+                            Text("متبقي " + countdown, color = Color.White, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+                item { Text("أعمال اليوم", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold) }
+                item {
+                    Card(onClick = { mainTab = "الصلاة" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("الصلاة المفروضة", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("مواقيت الفجر والظهر والعصر والمغرب والعشاء، وتسجيل أداء كل صلاة")
+                        }
+                    }
+                }
+                item {
+                    Card(onClick = { mainTab = "السنن" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("السنن الرواتب والضحى", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("متابعة ركعات السنن اليومية والضحى")
+                        }
+                    }
+                }
+                item {
+                    Card(onClick = { mainTab = "قيام الليل" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(nightWindow + " — تسجيل القيام والقراءة")
+                        }
+                    }
+                }
+                item {
+                    Card(onClick = { mainTab = "الصوم" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("الصوم", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("رمضان، شوال، صيام التطوع، والأيام الفائتة")
+                        }
+                    }
+                }
+                item {
+                    Card(onClick = { mainTab = "القضاء" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("الفوائت والقضاء", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("متابعة رصيد الصلوات والصيام الفائت")
+                        }
+                    }
+                }
+                item { Text("كل التسجيلات والإحصائيات في هذا الإصدار تحفظ على جهازك فقط.", color = Color(0xFF6D716A), style = MaterialTheme.typography.bodySmall) }
+            } else if (mainTab == "الصلاة") {
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = Green)) {
                         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -234,7 +310,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                     Text(prayer.name, fontWeight = FontWeight.SemiBold)
                                     Column(horizontalAlignment = Alignment.End) {
                                         Text(Instant.ofEpochMilli(prayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter))
-                                        TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن العملية" }) { Text("سنة صلاة " + prayer.name, style = MaterialTheme.typography.labelSmall) }
+                                        TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن" }) { Text("سنة صلاة " + prayer.name, style = MaterialTheme.typography.labelSmall) }
                                     }
                                 }
                                 HorizontalDivider(color = Color(0xFFD4DDCE))
@@ -247,6 +323,22 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                 }
                             }
                             Text("المواقيت محسوبة محليًا بطريقة تقريبية؛ راجعها مع التقويم الرسمي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
+                        }
+                    }
+                }
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("صلاة الضحى", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
+                            Text("وقتها من ارتفاع الشمس إلى قبيل الزوال. سجّلها بعد أدائها.")
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (duhaDone) "تم تسجيل الضحى اليوم" else "لم تسجل الضحى اليوم")
+                                Button(onClick = {
+                                    duhaDone = !duhaDone
+                                    actionFeedback = "أستغفر الله"
+                                    prefs.edit().putBoolean("duha_" + today, duhaDone).apply()
+                                }, colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text(if (duhaDone) "تراجع" else "سجل الضحى") }
+                            }
                         }
                     }
                 }
@@ -266,6 +358,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                                 DropdownMenuItem(text = { Text(status) }, onClick = {
                                                     val old = dailyStatus[name] ?: "لم أسجل بعد"
                                                     dailyStatus[name] = status
+                                                    if (status != "لم أسجل بعد") actionFeedback = "أستغفر الله"
                                                     prefs.edit().putString("status_" + today + "_" + name, status).apply()
                                                     if (old != "لم أصلِّ" && status == "لم أصلِّ") {
                                                         missedSinceInstall++
@@ -468,7 +561,143 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         }
                     }
                 }
+            } else if (mainTab == "السنن") {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("استثمار يومي في الجنة", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
+                            Text("قال رسول الله ﷺ: «ما من عبد مسلم يصلي لله كل يوم ثنتي عشرة ركعة تطوعًا غير فريضة، إلا بنى الله له بيتًا في الجنة».")
+                            Text("صحيح مسلم (728)", color = Color(0xFF6D716A), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("متابعة السنن الرواتب اليوم", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
+                            Text("سجّل كل سنة بعد أدائها. يتجدد العداد يوميًا.")
+                            Text(sunnahRakaatCount.toString() + " من 12 ركعة", style = MaterialTheme.typography.headlineMedium, color = Green, fontWeight = FontWeight.Bold)
+                            LinearProgressIndicator(progress = { (sunnahRakaatCount.toFloat() / 12f).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth(), color = Green)
+                            sunnahSlots.forEach { (slot, target) ->
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(slot + " — " + (sunnahDoneBySlot[slot] ?: 0) + "/" + target)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        TextButton(onClick = {
+                                            val next = ((sunnahDoneBySlot[slot] ?: 0) + 2).coerceAtMost(target)
+                                            sunnahDoneBySlot[slot] = next
+                                            actionFeedback = "أستغفر الله"
+                                            prefs.edit().putInt("sunnah_slot_" + today + "_" + slot, next).apply()
+                                        }, enabled = (sunnahDoneBySlot[slot] ?: 0) < target) { Text("+2") }
+                                        TextButton(onClick = {
+                                            val next = ((sunnahDoneBySlot[slot] ?: 0) - 2).coerceAtLeast(0)
+                                            sunnahDoneBySlot[slot] = next
+                                            prefs.edit().putInt("sunnah_slot_" + today + "_" + slot, next).apply()
+                                        }, enabled = (sunnahDoneBySlot[slot] ?: 0) > 0) { Text("تراجع") }
+                                    }
+                                }
+                            }
+                            Text("قد تختلف تفاصيل الرواتب وعددها المؤكد باختلاف المذاهب؛ هذا العداد لمتابعة الاثنتي عشرة ركعة الواردة في الحديث، وليس حكمًا على قبول العبادة.", color = Color(0xFF755F45), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                item { GuideCard("تفصيل السنن العملية", SunnahGuide.generalPrayer + SunnahGuide.afterPrayer + SunnahGuide.beforePrayer) }
+            } else if (mainTab == "الصوم") {
+                item {
+                    val hijriToday = HijrahDate.from(today)
+                    val hijriMonth = hijriToday.get(java.time.temporal.ChronoField.MONTH_OF_YEAR)
+                    val hijriYear = hijriToday.get(java.time.temporal.ChronoField.YEAR)
+                    val ramadanYear = if (hijriMonth > 9) hijriYear + 1 else hijriYear
+                    val ramadanStart = LocalDate.ofEpochDay(HijrahDate.of(ramadanYear, 9, 1).toEpochDay())
+                    val daysToRamadan = java.time.temporal.ChronoUnit.DAYS.between(today, ramadanStart).coerceAtLeast(0)
+                    Card(colors = CardDefaults.cardColors(containerColor = Green)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("رمضان القادم", color = Color.White.copy(alpha = 0.85f))
+                            Text(if (hijriMonth == 9) "نحن في شهر رمضان" else "متبقي تقريبًا " + daysToRamadan + " يومًا", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text("بداية الشهر محسوبة بالتقويم الهجري الحسابي في الجهاز، وقد تختلف عن إعلان الرؤية الرسمي في مصر بيوم.", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+                item {
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("رمضان", "شوال", "النوافل", "الفوائت").forEach { section ->
+                            FilterChip(selected = fastSection == section, onClick = { fastSection = section }, label = { Text(section) })
+                        }
+                    }
+                }
+                if (fastSection == "الفوائت") {
+                    item {
+                        CounterCard(title = "قضاء الصيام", remaining = fastRemaining, unit = "يوم", actionLabel = "سجل يوم قضاء",
+                            onAdd = { qadaFastsDone++; prefs.edit().putInt("fasts_done", qadaFastsDone).apply() },
+                            onUndo = { if (qadaFastsDone > 0) { qadaFastsDone--; prefs.edit().putInt("fasts_done", qadaFastsDone).apply() } })
+                        TextButton(onClick = { mainTab = "القضاء"; calculatorView = "القضاء" }) { Text("فتح حاسبة الفوائت") }
+                    }
+                } else {
+                    item {
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text(when (fastSection) { "رمضان" -> "متابعة صيام رمضان"; "شوال" -> "ستة أيام من شوال"; else -> "صيام التطوع" }, style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
+                                Text(when (fastSection) {
+                                    "رمضان" -> "الأيام المسجلة من رمضان: " + fastRamadanCount
+                                    "شوال" -> "الأيام المسجلة من شوال: " + fastShawwalCount + " من 6. سجّل أيام شوال التي صمتها."
+                                    else -> "من السنن: الاثنين والخميس، وثلاثة أيام من كل شهر، ويوم عرفة لغير الحاج، وعاشوراء."
+                                })
+                                if (fastLogged.isNotBlank()) {
+                                    Text("تم تسجيل اليوم: " + fastLogged, color = Green, fontWeight = FontWeight.SemiBold)
+                                    OutlinedButton(onClick = {
+                                        if (fastLogged == "رمضان") { fastRamadanCount = (fastRamadanCount - 1).coerceAtLeast(0); prefs.edit().putInt("fast_ramadan_count", fastRamadanCount).apply() }
+                                        if (fastLogged == "شوال") { fastShawwalCount = (fastShawwalCount - 1).coerceAtLeast(0); prefs.edit().putInt("fast_shawwal_count", fastShawwalCount).apply() }
+                                        fastLogged = ""
+                                        prefs.edit().remove("fast_type_" + today).apply()
+                                    }, modifier = Modifier.fillMaxWidth()) { Text("إلغاء تسجيل صيام اليوم") }
+                                } else {
+                                    Button(onClick = {
+                                        fastLogged = fastSection
+                                        actionFeedback = "أستغفر الله"
+                                        prefs.edit().putString("fast_type_" + today, fastSection).apply()
+                                        if (fastSection == "رمضان") { fastRamadanCount++; prefs.edit().putInt("fast_ramadan_count", fastRamadanCount).apply() }
+                                        if (fastSection == "شوال") { fastShawwalCount++; prefs.edit().putInt("fast_shawwal_count", fastShawwalCount).apply() }
+                                    }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("سجّلت صيام اليوم") }
+                                }
+                                if (fastSection == "شوال") Text("العدد المسجل تراكمي؛ راجع أنه داخل شهر شوال نفسه.", color = Color(0xFF755F45), style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+                item {
+                    val recentFasts = (0..29).mapNotNull { offset ->
+                        val loggedDate = today.minusDays(offset.toLong())
+                        val kind = prefs.getString("fast_type_" + loggedDate, null)
+                        if (kind.isNullOrBlank()) null else Pair(loggedDate, kind)
+                    }
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("سجل الصيام — آخر 30 يومًا", style = MaterialTheme.typography.titleMedium, color = Green, fontWeight = FontWeight.Bold)
+                            if (recentFasts.isEmpty()) Text("لم تسجل أيام صيام بعد.")
+                            recentFasts.forEach { record -> Text(record.first.toString() + " — " + record.second) }
+                        }
+                    }
+                }
+                item {
+                    GuideCard("مواسم وصيام مستحب", listOf(
+                        SunnahItem("الاثنين والخميس", "صيام متكرر", "كان النبي ﷺ يتحرى صيام يومي الاثنين والخميس.", "جامع الترمذي 747؛ سنن النسائي 2360"),
+                        SunnahItem("الأيام البيض", "13 و14 و15 من الشهر الهجري", "صيام ثلاثة أيام من كل شهر، ومنه الأيام البيض.", "صحيح البخاري 1981؛ صحيح مسلم 721"),
+                        SunnahItem("عاشوراء", "العاشر من المحرم", "يُستحب صومه، ومعه التاسع مخالفةً لليهود.", "صحيح مسلم 1134"),
+                        SunnahItem("يوم عرفة", "التاسع من ذي الحجة لغير الحاج", "صيامه يكفّر السنة الماضية والباقية كما ورد في الحديث.", "صحيح مسلم 1162"),
+                        SunnahItem("ستة أيام من شوال", "بعد رمضان", "من صام رمضان ثم أتبعه ستًا من شوال كان كصيام الدهر.", "صحيح مسلم 1164"),
+                        SunnahItem("أفضل الصيام", "صيام داود عليه السلام", "كان يصوم يومًا ويفطر يومًا.", "صحيح البخاري 1131؛ صحيح مسلم 1159")
+                    ))
+                }
             } else if (mainTab == "قيام الليل") {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("مراتب القيام بالقرآن", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
+                            Text("قال رسول الله ﷺ: «من قام بعشر آيات لم يكتب من الغافلين، ومن قام بمئة آية كتب من القانتين، ومن قام بألف آية كتب من المقنطرين».")
+                            Text("سنن أبي داود (1398) — حسّنه عدد من أهل العلم.", color = Color(0xFF6D716A), style = MaterialTheme.typography.bodySmall)
+                            Text(nightWindow + " — وقت تقديري للثلث الأخير.")
+                        }
+                    }
+                }
                 item { GuideCard("سنن قيام الليل", listOf(
                     SunnahItem("افتتاح صلاة الليل بركعتين خفيفتين", "هدي نبوي ثابت", "إذا قام أحدكم من الليل فليفتتح صلاته بركعتين خفيفتين.", "صحيح مسلم 768"),
                     SunnahItem("صلاة الليل مثنى مثنى", "صفة ثابتة", "صلاة الليل ركعتين ركعتين، ويختم المصلي بوتر.", "صحيح البخاري 990؛ صحيح مسلم 749"),
@@ -592,15 +821,6 @@ private fun FirstLaunchNotice(onContinue: () -> Unit) {
                 }
             }
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
-                    Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("رسالة «العهد»", color = Green, fontWeight = FontWeight.Bold)
-                        Text("نستخدم كلمة «العهد» هنا بوصفها معنى تذكيريًا واجتهادًا تحريريًا خاصًا بالمشروع: تذكير العبد بصلته بربه والمحافظة على الصلاة واتباع هدي النبي ﷺ. هذا المعنى من صياغة فريق التطبيق، وليس تفسيرًا منقولًا عن شارح للحديث أو مفسر أو عالم، ولا ندّعي أن الحديث نصّ على هذا الشرح بلفظه.")
-                        Text("أما حديث «العهد الذي بيننا وبينهم الصلاة، فمن تركها فقد كفر» فهو حديث في شأن الصلاة وخطورة تركها، وقد اختلف أهل العلم في بعض تفاصيل حكم تارك الصلاة؛ والتطبيق لا يصدر أحكامًا على أشخاص ولا يجيز للمستخدم تكفير أحد.")
-                    }
-                }
-            }
-            item {
                 Text("تنبيهات مهمة", style = MaterialTheme.typography.titleMedium, color = Green, fontWeight = FontWeight.Bold)
                 Text("• المعلومات الشرعية والأحاديث جُمعت للتعريف والتذكير، وقد تحتاج بعض المسائل إلى مراجعة أهل العلم. التطبيق ليس جهة إفتاء، ولا يغني عن سؤال عالم مؤهل.")
                 Text("• قد تختلف بعض أحكام الصلاة والسنن وتفاصيلها بين المذاهب الفقهية؛ راعينا الإشارة إلى الخلاف حيث يظهر، فلا تجعل التطبيق سببًا للإنكار على الآخرين.")
@@ -615,7 +835,7 @@ private fun FirstLaunchNotice(onContinue: () -> Unit) {
             }
             item {
                 Text("تنبيه أخير", style = MaterialTheme.typography.titleMedium, color = Green, fontWeight = FontWeight.Bold)
-                Text("هذا التطبيق عمل مساعد قابل للتطوير، ومحتواه واجتهاد بشري للتذكير والتعريف وليس فتوى أو حكمًا شرعيًا ملزمًا. قد توجد أخطاء أو معلومات ناقصة في النصوص أو الشروح أو الحسابات أو التنبيهات؛ لا يعتمد عليه وحده في تقرير حكم شرعي أو توقيت عبادة، وتُراجع المسائل مع أهل العلم والمصادر المعتمدة. لا يضمن المطور خلو التطبيق من الأخطاء أو استمرار عمل كل ميزة على كل جهاز، ولا يتحمل مسؤولية القرارات المبنية على استخدامه وحده، وذلك في حدود ما يسمح به القانون. نرحب بالإبلاغ عن الأخطاء ومراجعتها.")
+                Text("هذا التطبيق عمل مساعد قابل للتطوير، وقد توجد أخطاء أو معلومات ناقصة. نرحب بالتنبيه عنها ومراجعتها، ولا تنسب كل ما يظهر فيه إلى الشرع قبل التحقق من دليله.")
             }
             item {
                 Button(onClick = onContinue, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
