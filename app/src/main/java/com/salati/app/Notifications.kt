@@ -106,8 +106,33 @@ object PrayerNotifications {
         )
     }
 
+    fun cancelAll(context: Context) {
+        val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val zone = ZoneId.systemDefault()
+        for (offset in 0..8) {
+            val date = LocalDate.now(zone).plusDays(offset.toLong())
+            val base = (date.toEpochDay() % 100000).toInt() * 10000
+            val ids = mutableListOf<Int>()
+            for (index in 0..5) {
+                for (slot in 0..2) ids.add(base + index * 100 + slot + 1)
+                ids.add(base + index * 100 + 80)
+                ids.add(base + index * 100 + 90)
+            }
+            ids.add(base + 950)
+            ids.add(base + 801)
+            ids.add(base + 802)
+            ids.add(base + 803)
+            ids.forEach { id ->
+                val pi = PendingIntent.getBroadcast(context, id, Intent(context, PrayerAlarmReceiver::class.java), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
+                if (pi != null) { alarm.cancel(pi); pi.cancel() }
+            }
+        }
+        scheduleGazaReminder(context, false)
+    }
+
     fun schedule(context: Context, lat: Double, lon: Double) {
         val prefs = context.getSharedPreferences("salati", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("all_notifications_enabled", true)) { cancelAll(context); return }
         val notifyBefore = prefs.getBoolean("notify_before", true)
         val notifyAt = prefs.getBoolean("notify_at", true)
         val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
