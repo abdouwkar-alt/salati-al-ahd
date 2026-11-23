@@ -270,7 +270,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     onOpen = { section, destination, subTab ->
                         activeSection = section
                         navigationHistory.clear()
-                        mainTab = if (section == "الصلاة") "بوابة_الصلاة" else destination
+                        mainTab = destination
                         sectionSubTab = subTab.ifBlank {
                             when (section) {
                                 "الصلاة" -> "تسجيل الصلاة"
@@ -339,14 +339,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             }
 
             if (mainTab == "بوابة_الصلاة") {
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("أبواب الصلاة", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                            Text("اختر الباب الذي تريد الدخول إليه.")
-                        }
-                    }
-                }
+                item { Text("اختر أحد أبواب الصلاة من القائمة أعلاه.", color = Green, style = MaterialTheme.typography.bodyMedium) }
             } else if (mainTab.startsWith("فرض_")) {
                 item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("فرض_"), isFard = true, prefs = prefs) }
             } else if (mainTab.startsWith("نافلة_")) {
