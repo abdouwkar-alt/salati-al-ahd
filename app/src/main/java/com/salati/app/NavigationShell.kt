@@ -42,22 +42,38 @@ fun HomeDashboard(
             }
         }
         JourneySketch(Modifier.fillMaxWidth().height(118.dp))
+        Text(
+            "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 2.dp),
+            color = ShellGreen,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleMedium
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SectionHeading("الصراط المستقيم")
                 HomeTile("التفكر", "التفكر", "التفكر", onOpen)
                 HomeTile("سنن الرسول ﷺ", "سنن الرسول ﷺ", "السنن", onOpen)
                 HomeTile("تدبر القرآن", "تدبر القرآن", "تدبر القرآن", onOpen)
                 HomeTile("التفقه", "التفقه", "فقه الصلاة", onOpen)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SectionHeading("العبادات")
                 HomeTile("الإنفاق", "الإنفاق", "الإنفاق", onOpen)
                 HomeTile("الأذكار", "الأذكار", "الأذكار", onOpen)
                 HomeTile("الصوم", "الصوم", "الصوم", onOpen)
                 HomeTile("الدعاء", "الدعاء", "الأدعية", onOpen)
-                HomeTile("الصلاة", "الصلاة", "الصلاة", onOpen, "عماد الدين", true)
             }
+        }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            HomeTile(
+                title = "الصلاة",
+                section = "الصلاة",
+                destination = "الصلاة",
+                onOpen = onOpen,
+                subtitle = "عماد الدين",
+                emphasized = true,
+                modifier = Modifier.fillMaxWidth(.62f)
+            )
         }
     }
 }
@@ -76,10 +92,11 @@ private fun HomeTile(
     destination: String,
     onOpen: (String, String, String) -> Unit,
     subtitle: String? = null,
-    emphasized: Boolean = false
+    emphasized: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 62.dp).clickable { onOpen(section, destination, "") },
+        modifier = modifier.fillMaxWidth().heightIn(min = 62.dp).clickable { onOpen(section, destination, "") },
         colors = CardDefaults.cardColors(containerColor = if (emphasized) ShellGreen else Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, if (emphasized) ShellGreen else ShellLine),
         shape = RoundedCornerShape(14.dp)
