@@ -344,80 +344,97 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                             Text("مواقيت الصلاة اليوم", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Green)
                             Text(today.format(dateFormatter), color = Color(0xFF6D716A))
                             todayTimes.forEach { prayer ->
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(prayer.name, fontWeight = FontWeight.SemiBold)
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text(Instant.ofEpochMilli(prayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter))
-                                        TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن" }) { Text("سنة صلاة " + prayer.name, style = MaterialTheme.typography.labelSmall) }
+                                var expanded by remember(today, prayer.name) { mutableStateOf(false) }
+                                val prayerHadith = when (prayer.name) {
+                                    "الفجر" -> "مَن صلَّى الصبحَ فهو في ذمَّةِ الله." to "صحيح مسلم (657)"
+                                    "الظهر" -> "إذا اشتدَّ الحرُّ فأبرِدوا بالصلاة؛ فإن شدة الحر من فيح جهنم." to "صحيح البخاري (536)، وصحيح مسلم (616)"
+                                    "العصر" -> "مَن ترك صلاةَ العصرِ فقد حَبِطَ عملُه." to "صحيح البخاري (553)"
+                                    "المغرب" -> "لا تزال أمتي بخيرٍ ما عجَّلوا المغرب." to "سنن أبي داود (418)، وجامع الترمذي (172)"
+                                    "العشاء" -> "إن أثقلَ صلاةٍ على المنافقين صلاةُ العشاء وصلاةُ الفجر." to "صحيح البخاري (657)، وصحيح مسلم (651)"
+                                    else -> "" to ""
+                                }
+                                Column(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text(prayer.name, fontWeight = FontWeight.SemiBold)
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(Instant.ofEpochMilli(prayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter))
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Box {
+                                                    TextButton(onClick = { expanded = true }) {
+                                                        Text(dailyStatus[prayer.name] ?: "سجل الصلاة", style = MaterialTheme.typography.labelSmall)
+                                                    }
+                                                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                                        PrayerStatuses.forEach { status ->
+                                                            DropdownMenuItem(text = { Text(status) }, onClick = {
+                                                                val name = prayer.name
+                                                                val old = dailyStatus[name] ?: "لم أسجل بعد"
+                                                                dailyStatus[name] = status
+                                                                if (status != "لم أسجل بعد") actionFeedback = "أستغفر الله"
+                                                                prefs.edit().putString("status_" + today + "_" + name, status).apply()
+                                                                if (old != "لم أصلِّ" && status == "لم أصلِّ") {
+                                                                    missedSinceInstall++
+                                                                    missedByPrayer[name] = (missedByPrayer[name] ?: 0) + 1
+                                                                    prefs.edit().putInt("missed_since_install", missedSinceInstall).putInt("missed_" + name, missedByPrayer[name] ?: 0).apply()
+                                                                } else if (old == "لم أصلِّ" && status != "لم أصلِّ") {
+                                                                    missedSinceInstall = (missedSinceInstall - 1).coerceAtLeast(0)
+                                                                    missedByPrayer[name] = ((missedByPrayer[name] ?: 0) - 1).coerceAtLeast(0)
+                                                                    prefs.edit().putInt("missed_since_install", missedSinceInstall).putInt("missed_" + name, missedByPrayer[name] ?: 0).apply()
+                                                                }
+                                                                expanded = false
+                                                            })
+                                                        }
+                                                    }
+                                                }
+                                                TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن" }) {
+                                                    Text("السنن والأحاديث", style = MaterialTheme.typography.labelSmall)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (prayerHadith.first.isNotBlank()) {
+                                        Text("«" + prayerHadith.first + "»", color = Green, style = MaterialTheme.typography.bodyMedium)
+                                        Text(prayerHadith.second, color = Color(0xFF77736B), style = MaterialTheme.typography.labelSmall)
                                     }
                                 }
                                 HorizontalDivider(color = Color(0xFFD4DDCE))
                                 if (prayer.name == "الفجر") {
-                                    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            Text("الضحى", fontWeight = FontWeight.SemiBold)
-                                            Text("نافلة — ليست صلاة موقوتة بأذان", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D716A))
+                                    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text("الضحى", fontWeight = FontWeight.SemiBold)
+                                                Text("نافلة — ليست صلاة موقوتة بأذان", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6D716A))
+                                            }
+                                            Column(horizontalAlignment = Alignment.End) {
+                                                Text(Instant.ofEpochMilli(duhaStartTime).atZone(ZoneId.systemDefault()).format(timeFormatter))
+                                                Text(if (duhaDone) "تم تسجيلها اليوم" else "لم تسجل اليوم", style = MaterialTheme.typography.bodySmall, color = Green)
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    TextButton(onClick = {
+                                                        duhaDone = !duhaDone
+                                                        actionFeedback = "أستغفر الله"
+                                                        prefs.edit().putBoolean("duha_" + today, duhaDone).apply()
+                                                    }) { Text(if (duhaDone) "تراجع" else "سجل الضحى", style = MaterialTheme.typography.labelSmall) }
+                                                    TextButton(onClick = { selectedPrayerGuide = "الضحى"; sunnahTab = "سنن الصلاة"; mainTab = "السنن" }) {
+                                                        Text("السنن والأحاديث", style = MaterialTheme.typography.labelSmall)
+                                                    }
+                                                }
+                                            }
                                         }
-                                        Column(horizontalAlignment = Alignment.End) {
-                                            Text(Instant.ofEpochMilli(duhaStartTime).atZone(ZoneId.systemDefault()).format(timeFormatter))
-                                            Text(if (duhaDone) "تم تسجيلها اليوم" else "لم تسجل اليوم", style = MaterialTheme.typography.bodySmall, color = Green)
-                                            TextButton(onClick = {
-                                                duhaDone = !duhaDone
-                                                actionFeedback = "أستغفر الله"
-                                                prefs.edit().putBoolean("duha_" + today, duhaDone).apply()
-                                            }) { Text(if (duhaDone) "تراجع" else "سجل الضحى", style = MaterialTheme.typography.labelSmall) }
-                                        }
+                                        Text("يُجزئ عن كل ذلك ركعتان يركعهما من الضحى.", color = Green, style = MaterialTheme.typography.bodyMedium)
+                                        Text("صحيح مسلم (720) — حديث أبي ذر في صدقة مفاصل الإنسان.", color = Color(0xFF77736B), style = MaterialTheme.typography.labelSmall)
                                     }
                                     HorizontalDivider(color = Color(0xFFD4DDCE))
                                 }
                                 if (prayer.name == "العشاء") {
-                                    Column(Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Column(Modifier.fillMaxWidth().padding(start = 8.dp, top = 4.dp, bottom = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Text("قيام الليل — نافلة", color = Green, fontWeight = FontWeight.SemiBold)
                                         Text(nightWindow + "، وهو تقدير للثلث الأخير من الليل.")
-                                        TextButton(onClick = { mainTab = "قيام الليل" }) { Text("سنن قيام الليل ومتابعتها") }
+                                        Text("أفضلُ الصلاةِ بعدَ الفريضةِ صلاةُ الليلِ.", color = Green, style = MaterialTheme.typography.bodyMedium)
+                                        Text("صحيح مسلم (1163).", color = Color(0xFF77736B), style = MaterialTheme.typography.labelSmall)
+                                        TextButton(onClick = { mainTab = "قيام الليل" }) { Text("متابعة قيام الليل والسنن والأحاديث") }
                                     }
                                 }
                             }
                             Text("المواقيت محسوبة محليًا بطريقة تقريبية؛ راجعها مع التقويم الرسمي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
-                        }
-                    }
-                }
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("تسجيل صلوات اليوم", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
-                            Text("حدد حالة كل صلاة. اختيار «لم أصلِّ» يضيفها إلى رصيد الفوائت.")
-                            PrayerNames.forEach { name ->
-                                var expanded by remember(today, name) { mutableStateOf(false) }
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(name, fontWeight = FontWeight.SemiBold)
-                                    Box {
-                                        TextButton(onClick = { expanded = true }) { Text(dailyStatus[name] ?: "لم أسجل بعد") }
-                                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                            PrayerStatuses.forEach { status ->
-                                                DropdownMenuItem(text = { Text(status) }, onClick = {
-                                                    val old = dailyStatus[name] ?: "لم أسجل بعد"
-                                                    dailyStatus[name] = status
-                                                    if (status != "لم أسجل بعد") actionFeedback = "أستغفر الله"
-                                                    prefs.edit().putString("status_" + today + "_" + name, status).apply()
-                                                    if (old != "لم أصلِّ" && status == "لم أصلِّ") {
-                                                        missedSinceInstall++
-                                                        missedByPrayer[name] = (missedByPrayer[name] ?: 0) + 1
-                                                        prefs.edit().putInt("missed_since_install", missedSinceInstall).putInt("missed_" + name, missedByPrayer[name] ?: 0).apply()
-                                                    } else if (old == "لم أصلِّ" && status != "لم أصلِّ") {
-                                                        missedSinceInstall = (missedSinceInstall - 1).coerceAtLeast(0)
-                                                        missedByPrayer[name] = ((missedByPrayer[name] ?: 0) - 1).coerceAtLeast(0)
-                                                        prefs.edit().putInt("missed_since_install", missedSinceInstall).putInt("missed_" + name, missedByPrayer[name] ?: 0).apply()
-                                                    }
-                                                    expanded = false
-                                                })
-                                            }
-                                        }
-                                    }
-                                }
-                                HorizontalDivider(color = Color(0xFFECE8DE))
-                            }
-                            Text("الفوائت المسجلة منذ استخدام التطبيق: " + missedSinceInstall + " فرض", color = Green, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
