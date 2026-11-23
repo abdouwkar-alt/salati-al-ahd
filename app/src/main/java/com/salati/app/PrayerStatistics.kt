@@ -61,9 +61,27 @@ fun PrayerStatisticsScreen(
         }.sortedBy { it.first }
     }
 
+    val rawatibByDate = allPrefs.entries.mapNotNull { (key, value) ->
+        if (!key.startsWith("sunnah_slot_")) return@mapNotNull null
+        val rest = key.removePrefix("sunnah_slot_")
+        val splitAt = rest.indexOf('_')
+        if (splitAt <= 0) return@mapNotNull null
+        val date = rest.substring(0, splitAt)
+        val amount = value as? Int ?: 0
+        date to amount
+    }.groupBy({ it.first }, { it.second }).mapValues { it.value.sum() }
+    val completedRawatibDays = rawatibByDate.values.count { it >= 12 }
+
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("إحصائياتك", style = MaterialTheme.typography.headlineMedium, color = StatsGreen, fontWeight = FontWeight.Bold)
         Text("مراجعة هادئة لما سجلته أنت في التطبيق، وليست تقييمًا لقبول العبادة أو ميزانًا للتقوى.", color = Color(0xFF77736B))
+        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("السنن الرواتب وفضل البيت في الجنة", color = StatsGreen, fontWeight = FontWeight.Bold)
+                Text("$completedRawatibDays يومًا سجلت فيه إكمال الاثنتي عشرة ركعة.")
+                Text("هذا إحصاء لما سجلته من العمل المرتبط بحديث أم حبيبة رضي الله عنها، وليس شهادة بقبول العمل أو ضمانًا للثواب.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF77736B))
+            }
+        }
         Card(colors = CardDefaults.cardColors(containerColor = StatsPale)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("متابعة الصلوات اليومية", style = MaterialTheme.typography.titleLarge, color = StatsGreen, fontWeight = FontWeight.Bold)
