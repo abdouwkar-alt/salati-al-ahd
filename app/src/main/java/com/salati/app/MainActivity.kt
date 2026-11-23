@@ -142,7 +142,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     val navigationHistory = remember { mutableStateListOf<Pair<String, String>>() }
     var activeSection by remember { mutableStateOf("البداية") }
     fun navigateTo(destination: String) {
-        navigationHistory.add(mainTab to activeSection)
+        if (destination != mainTab) navigationHistory.add(mainTab to activeSection)
         mainTab = destination
     }
     var sectionSubTab by remember { mutableStateOf("") }
@@ -357,7 +357,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             } else if (mainTab == "قيام_السجل") {
                 item { QiyamHistoryScreen(prefs = prefs) }
             } else if (mainTab == "قيام_إنهاء") {
-                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
+                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++; navigateTo("قيام_السجل") } }
             } else if (mainTab == "الإنفاق") {
                 item {
                     SectionPlaceholder(
@@ -808,22 +808,28 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     Button(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("إنهاء الجلسة") }
                 }
                 item {
-                    QuranReaderSection(prefs = prefs, context = context, verseByVerse = true, showSearch = false) { surahNumber, surahName, ayahNumber ->
-                        val global = quranGlobalAyahIndex(surahNumber, ayahNumber)
-                        val hasStart = prefs.getInt("qiyam_active_start", -1) >= 0
-                        val start = if (hasStart) prefs.getInt("qiyam_active_start", global) else global
-                        val sessionVerses = (global - start + 1).coerceAtLeast(1)
-                        val editor = prefs.edit()
-                            .putInt("qiyam_active_start", start)
-                            .putInt("qiyam_active_end", global)
-                            .putInt("qiyam_active_verses", sessionVerses)
-                            .putInt("qiyam_active_end_surah", surahNumber)
-                            .putInt("qiyam_active_end_ayah", ayahNumber)
-                            .putString("qiyam_active_end_surah_name", surahName)
-                        if (!hasStart) editor.putInt("qiyam_active_start_surah", surahNumber).putInt("qiyam_active_start_ayah", ayahNumber).putString("qiyam_active_start_surah_name", surahName)
-                        editor.apply()
-                        qiyamRefresh++
-                    }
+                    QuranReaderSection(
+                        prefs = prefs, context = context, verseByVerse = true, showSearch = false,
+                        onSessionStart = { surahNumber, surahName, ayahNumber ->
+                            val global = quranGlobalAyahIndex(surahNumber, ayahNumber)
+                            prefs.edit().putInt("qiyam_active_start", global).putInt("qiyam_active_end", global)
+                                .putInt("qiyam_active_verses", 1)
+                                .putInt("qiyam_active_start_surah", surahNumber).putInt("qiyam_active_start_ayah", ayahNumber)
+                                .putString("qiyam_active_start_surah_name", surahName)
+                                .putInt("qiyam_active_end_surah", surahNumber).putInt("qiyam_active_end_ayah", ayahNumber)
+                                .putString("qiyam_active_end_surah_name", surahName).apply()
+                            qiyamRefresh++
+                        },
+                        onPositionSelected = { surahNumber, surahName, ayahNumber ->
+                            val global = quranGlobalAyahIndex(surahNumber, ayahNumber)
+                            val start = prefs.getInt("qiyam_active_start", -1)
+                            val sessionVerses = if (start < 0) 0 else (global - start + 1).coerceAtLeast(0)
+                            prefs.edit().putInt("qiyam_active_end", global).putInt("qiyam_active_verses", sessionVerses)
+                                .putInt("qiyam_active_end_surah", surahNumber).putInt("qiyam_active_end_ayah", ayahNumber)
+                                .putString("qiyam_active_end_surah_name", surahName).apply()
+                            qiyamRefresh++
+                        }
+                    )
                 }
             } else if (mainTab == "الإحصائيات") {
                 item {
