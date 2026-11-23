@@ -44,7 +44,7 @@ private val Green = Color(0xFF164B3A)
 private val Cream = Color(0xFFF6F2E9)
 private val PaleGreen = Color(0xFFE5EBDD)
 private val PrayerNames = listOf("الفجر", "الظهر", "العصر", "المغرب", "العشاء")
-private val PrayerStatuses = listOf("لم أسجل بعد", "في الوقت جماعة", "في الوقت منفردًا", "في البيت", "قضاء", "بعد الوقت", "لم أصلِّ")
+private val PrayerStatuses = listOf("لم أسجل بعد", "في الوقت جماعة", "في الوقت منفردًا", "في البيت منفردًا", "قضاء منفردًا", "قضاء جماعة", "بعد الوقت", "لم أصلِّ")
 
 class MainActivity : ComponentActivity() {
     private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { getLocationAndSchedule(); PrayerNotifications.scheduleGazaReminder(this) }
@@ -143,6 +143,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var sectionSubTab by remember { mutableStateOf("") }
     var calculatorView by remember { mutableStateOf("الحاسبة") }
     var qadaNoticeAccepted by remember { mutableStateOf(prefs.getBoolean("qada_notice_accepted", false)) }
+    var qiyamRefresh by remember { mutableIntStateOf(0) }
     var allNotificationsEnabled by remember { mutableStateOf(prefs.getBoolean("all_notifications_enabled", true)) }
     var selectedPrayerGuide by remember { mutableStateOf("الفجر") }
     var sunnahTab by remember { mutableStateOf("سنن الصلاة") }
@@ -769,10 +770,13 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                             .putInt("qiyam_session_surah_" + today, surahNumber)
                             .putInt("qiyam_session_ayah_" + today, ayahNumber)
                             .putString("qiyam_session_surah_name_" + today, surahName)
+                            .putInt("qiyam_verses", counted)
+                            .putString("qiyam_date", today.toString())
                             .apply()
+                        qiyamRefresh++
                     }
                 }
-                item { QiyamTrackerScreen(prefs = prefs) }
+                item { QiyamTrackerScreen(prefs = prefs, refreshToken = qiyamRefresh) }
             } else if (mainTab == "الإحصائيات") {
                 item {
                     PrayerStatisticsScreen(
