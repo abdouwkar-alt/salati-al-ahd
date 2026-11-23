@@ -308,7 +308,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         }
                     )
                 }
-                item { SectionSketch(section = activeSection) }
+                if (activeSection != "الصلاة") item { SectionSketch(section = activeSection) }
             }
 
             if (mainTab == "الإنفاق") {
