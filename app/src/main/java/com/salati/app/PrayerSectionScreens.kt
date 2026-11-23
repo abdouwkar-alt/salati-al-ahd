@@ -143,9 +143,9 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
     val toSurah = prefs.getString("qiyam_active_end_surah_name", "") ?: ""
     val toAyah = prefs.getInt("qiyam_active_end_ayah", 0)
     val reward = when {
-        verses >= 1000 -> "بفضل الله، بلغت ألف آية في قيامك؛ ورد في الحديث: «كُتب من المقنطرين»."
-        verses >= 100 -> "بفضل الله، بلغت مئة آية في قيامك؛ ورد في الحديث: «كُتب من القانتين»."
-        verses >= 10 -> "بفضل الله، بلغت عشر آيات في قيامك؛ ورد في الحديث: «لم يُكتب من الغافلين»."
+        verses >= 1000 -> "عدد الآيات المسجّل بلغ ألف آية؛ ورد في الحديث وصف «المقنطرين»."
+        verses >= 100 -> "عدد الآيات المسجّل بلغ مئة آية؛ ورد في الحديث وصف «القانتين»."
+        verses >= 10 -> "عدد الآيات المسجّل بلغ عشر آيات؛ ورد في الحديث: «لم يُكتب من الغافلين»."
         else -> "سجّلت $verses آية في هذه الجلسة. ما تيسر من القيام خير، ويمكنك الزيادة أو التوقف بحسب استطاعتك."
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -183,7 +183,8 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
                 editor.putString("qiyam_session_history", array.toString())
                     .remove("qiyam_active_verses").remove("qiyam_active_start").remove("qiyam_active_end")
                     .remove("qiyam_active_start_surah_name").remove("qiyam_active_start_ayah")
-                    .remove("qiyam_active_end_surah_name").remove("qiyam_active_end_ayah").apply()
+                    .remove("qiyam_active_end_surah_name").remove("qiyam_active_end_ayah")
+                    .remove("qiyam_active_ayah_keys").apply()
                 saved = true
                 onSaved()
             }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) { Text("حفظ الجلسة") }
