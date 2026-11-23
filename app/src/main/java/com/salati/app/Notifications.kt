@@ -122,6 +122,7 @@ object PrayerNotifications {
             ids.add(base + 801)
             ids.add(base + 802)
             ids.add(base + 803)
+            ids.add(base + 804)
             ids.forEach { id ->
                 val pi = PendingIntent.getBroadcast(context, id, Intent(context, PrayerAlarmReceiver::class.java), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
                 if (pi != null) { alarm.cancel(pi); pi.cancel() }
@@ -173,6 +174,11 @@ object PrayerNotifications {
             val learningAt = date.atTime(11, 0).atZone(zone).toInstant().toEpochMilli()
             val learningId = (date.toEpochDay() % 100000).toInt() * 10000 + 950
             setReminder(learningAt, learningId, learning.title + "\\n" + learning.body + "\\nالمصدر: " + learning.source, learning.title, notifyBefore)
+            val siwakHour = 9 + java.util.Random(date.toEpochDay()).nextInt(12)
+            val siwakAt = date.atTime(siwakHour, 0).atZone(zone).toInstant().toEpochMilli()
+            val siwakId = (date.toEpochDay() % 100000).toInt() * 10000 + 804
+            val siwak = ReminderContent("سنة السواك", "قال رسول الله ﷺ: «السواك مطهرة للفم مرضاة للرب». تذكير لطيف باستعمال السواك؛ فهو من السنن التي تتأكد عند الصلاة والوضوء.", "سنن النسائي (5)، وصححه أهل العلم")
+            setReminder(siwakAt, siwakId, siwak.title + "\\n" + siwak.body + "\\nالمصدر: " + siwak.source, siwak.title, notifyBefore)
             // Night reminders: middle of the night and the final third, using Maghrib-to-Fajr interval.
             val maghrib = prayers.first { it.name == "المغرب" }.time
             val fajr = PrayerTimes.forDate(date.plusDays(1), lat, lon, zone).first().time
