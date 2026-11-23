@@ -340,13 +340,13 @@ fun QuranReaderSection(
                         },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (activeAyah != null && activeSurah != null) {
+                        if (activeAyah != null) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(18.dp),
                                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(vertical = 18.dp)
                             ) {
-                                Text(activeSurah.name, color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                Text(activeSurah?.name.orEmpty(), color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                                 Text(activeAyah.text, color = pageForeground, textAlign = TextAlign.Center, style = MaterialTheme.typography.headlineLarge, lineHeight = MaterialTheme.typography.headlineLarge.lineHeight)
 
                             }
