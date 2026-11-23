@@ -52,7 +52,7 @@ fun HomeDashboard(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeTile("التفكر", "التفكر", "التفكر", onOpen)
+                HomeTile("الصدقات", "الإنفاق", "الإنفاق", onOpen)
                 HomeTile("سنن الرسول ﷺ", "سنن الرسول ﷺ", "السنن", onOpen)
                 HomeTile("تدبر القرآن", "تدبر القرآن", "تدبر القرآن", onOpen)
                 HomeTile("التفقه", "التفقه", "فقه الصلاة", onOpen)
