@@ -684,7 +684,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         }
                     }
                 }
-                item { GuideCard("تفصيل السنن العملية", SunnahGuide.generalPrayer + SunnahGuide.afterPrayer + SunnahGuide.beforePrayer) }
+
             } else if (mainTab == "الصوم") {
                 item {
                     val hijriToday = HijrahDate.from(today)
