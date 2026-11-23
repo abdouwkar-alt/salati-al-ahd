@@ -142,6 +142,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var activeSection by remember { mutableStateOf("البداية") }
     var sectionSubTab by remember { mutableStateOf("") }
     var calculatorView by remember { mutableStateOf("الحاسبة") }
+    var qadaNoticeAccepted by remember { mutableStateOf(prefs.getBoolean("qada_notice_accepted", false)) }
+    var allNotificationsEnabled by remember { mutableStateOf(prefs.getBoolean("all_notifications_enabled", true)) }
     var selectedPrayerGuide by remember { mutableStateOf("الفجر") }
     var sunnahTab by remember { mutableStateOf("سنن الصلاة") }
     var wuduFiqhTopic by remember { mutableStateOf("أركان الوضوء") }
@@ -408,6 +410,28 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                 }
                             }
                             Text("المواقيت محسوبة محليًا بطريقة تقريبية؛ راجعها مع التقويم الرسمي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
+                        }
+                    }
+                }
+            } else if (mainTab == "القضاء" && calculatorView == "الحاسبة" && !qadaNoticeAccepted) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
+                        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("﴿لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا﴾", color = Green, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text("البقرة: 286", color = Color(0xFF77736B), style = MaterialTheme.typography.bodySmall)
+                            Text("قضاء ما فات من الصلاة مسألة فقهية فيها تفصيل، ويختلف الحكم باختلاف سبب الفوات. النوم والنسيان لهما حكم، وترك الصلاة عمدًا له بحث وخلاف بين أهل العلم.")
+                            Text("قول جمهور الفقهاء: وجوب قضاء الصلاة الفائتة، حتى مع كثرة الفوائت، مع مراعاة القدرة والمشقة وتنظيم القضاء بما لا يضيّع الفرائض الحاضرة.")
+                            Text("ونُقل قول لبعض أهل العلم، منهم ابن حزم، واختيار لشيخ الإسلام ابن تيمية فيمن ترك الصلاة عمدًا ثم تاب: أنه لا يقضي ما ترك عمدًا، بل يتوب ويكثر من العمل الصالح. هذا قول مخالف للجمهور، ويُعرض هنا للتعريف بالخلاف لا لإصدار فتوى شخصية.")
+                            Text("أما ما فات بنوم أو نسيان، فالأصل فيه القضاء عند الاستيقاظ أو التذكر، لحديث: «مَن نسي صلاةً فليصلِّ إذا ذكرها».")
+                            HorizontalDivider()
+                            Text("«إن الدين يسر، ولن يشاد الدين أحد إلا غلبه» — صحيح البخاري (39).")
+                            Text("«ما أعددت لها كثير صلاة ولا صيام، ولكني أحب الله ورسوله» — صحيح البخاري (6171)، وصحيح مسلم (2639)، في قصة الرجل الذي قال إنه يحب الله ورسوله.")
+                            Text("هذه الحاسبة أداة تقديرية لتنظيم ما تختار متابعته، وليست فتوى ولا حكمًا ملزمًا. لا تعتمد رقمًا آليًا قبل مراجعة ظروفك وسؤال عالم موثوق عند الحاجة. إن لم تكن مستعدًا الآن، يمكنك الرجوع لاحقًا.")
+                            Button(onClick = {
+                                qadaNoticeAccepted = true
+                                prefs.edit().putBoolean("qada_notice_accepted", true).apply()
+                            }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("أفهم التنبيه وأريد المتابعة") }
+                            OutlinedButton(onClick = { mainTab = "الصلاة" }, modifier = Modifier.fillMaxWidth()) { Text("أعود لاحقًا") }
                         }
                     }
                 }
@@ -748,15 +772,20 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
                         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text("إعدادات التنبيهات", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
-                            Text("اختر توقيت وصول الإشعار.")
+                            Text("إشعارات متنوعة من أبواب الصلاة والنوافل والضحى وقيام الليل والأذكار والأدعية. يمكنك تشغيل جميع إشعارات التطبيق أو إيقافها.") 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(checked = notifyGaza, onCheckedChange = { value ->
+                                Checkbox(checked = allNotificationsEnabled, onCheckedChange = { value ->
+                                    allNotificationsEnabled = value
+                                    notifyBefore = value
+                                    notifyAt = value
                                     notifyGaza = value
-                                    prefs.edit().putBoolean("notify_gaza", value).apply()
+                                    prefs.edit().putBoolean("all_notifications_enabled", value).putBoolean("notify_before", value).putBoolean("notify_at", value).putBoolean("notify_gaza", value).apply()
+                                    if (value) PrayerNotifications.schedule(context, lat, lon) else PrayerNotifications.cancelAll(context)
                                     PrayerNotifications.scheduleGazaReminder(context, value)
                                 })
-                                Text("تذكير يومي بالدعاء لأهل غزة — الساعة 8 مساءً تقريبًا")
+                                Text(if (allNotificationsEnabled) "إشعارات التطبيق مفعّلة" else "إشعارات التطبيق متوقفة")
                             }
+
                             if (android.os.Build.VERSION.SDK_INT >= 33 &&
                                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
                             ) {
@@ -766,22 +795,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                 ) { Text("السماح بإشعارات التطبيق") }
                                 Text("لن تصل تذكيرات غزة أو الصلاة قبل السماح بإشعارات التطبيق من النظام.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF8A4B19))
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(checked = notifyBefore, onCheckedChange = { value ->
-                                    notifyBefore = value
-                                    prefs.edit().putBoolean("notify_before", value).apply()
-                                    PrayerNotifications.schedule(context, lat, lon)
-                                })
-                                Text("تذكيرات متنوعة قبل الصلاة: قبلها بساعة ونصف ساعة و10 دقائق")
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(checked = notifyAt, onCheckedChange = { value ->
-                                    notifyAt = value
-                                    prefs.edit().putBoolean("notify_at", value).apply()
-                                    PrayerNotifications.schedule(context, lat, lon)
-                                })
-                                Text("أذكار بعد الصلاة وقيام الليل والوتر")
-                            }
+
+
                                             Text("عنوان الإشعار ثابت: الصلاة جامعة. ويظهر تحته حديث أو آية مرتبطة بالصلاة. لا يصدر التطبيق أذانًا صوتيًا.", color = Color(0xFF6D716A))
                         }
                     }
