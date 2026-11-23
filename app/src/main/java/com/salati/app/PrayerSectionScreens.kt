@@ -137,7 +137,7 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
     var witr by remember(today) { mutableStateOf(false) }
     var reflection by remember(today) { mutableStateOf("") }
     var saved by remember(today) { mutableStateOf(false) }
-    val verses = prefs.getInt("qiyam_active_verses", 0).coerceAtLeast(0)
+    val verses = maxOf(prefs.getInt("qiyam_active_verses", 0), prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.size ?: 0).coerceAtLeast(0)
     val fromSurah = prefs.getString("qiyam_active_start_surah_name", "") ?: ""
     val fromAyah = prefs.getInt("qiyam_active_start_ayah", 0)
     val toSurah = prefs.getString("qiyam_active_end_surah_name", "") ?: ""
