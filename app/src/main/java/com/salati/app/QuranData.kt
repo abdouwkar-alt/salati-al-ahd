@@ -4,6 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -133,6 +137,9 @@ fun QuranReaderSection(
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    var readerOpen by remember { mutableStateOf(false) }
+    var readingTheme by remember { mutableStateOf(prefs.getString("qiyam_reader_theme", "dark") ?: "dark") }
+    var dragDistance by remember { mutableFloatStateOf(0f) }
 
     fun load(force: Boolean = false) {
         scope.launch {
@@ -213,47 +220,47 @@ fun QuranReaderSection(
                 }
                 if (current != null) {
                     if (verseByVerse) {
-                        val ayah = current.ayahs.getOrNull(selectedAyah - 1)
-                        if (ayah != null) {
-                            Surface(color = Color(0xFFD6E5D7), shape = MaterialTheme.shapes.large) {
-                                Column(Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Text(current.name, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
-                                    Text(ayah.text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                                }
+                        Text("اختر موضع البداية، ثم اختر مظهر المصحف قبل القراءة.", color = Color(0xFF555B54))
+                        Text("السورة", fontWeight = FontWeight.SemiBold, color = Color(0xFF164B3A))
+                        Text("الآية: $selectedAyah (اتركها كما هي للبدء من أول السورة، أو اختر رقمًا)", style = MaterialTheme.typography.bodyMedium)
+                        OutlinedButton(onClick = { menuExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("اختيار السورة: ${current.name}")
+                        }
+                        var ayahMenuExpanded by remember { mutableStateOf(false) }
+                        OutlinedButton(onClick = { ayahMenuExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("اختيار الآية: $selectedAyah")
+                        }
+                        DropdownMenu(expanded = ayahMenuExpanded, onDismissRequest = { ayahMenuExpanded = false }, modifier = Modifier.heightIn(max = 420.dp)) {
+                            current.ayahs.forEach { item ->
+                                DropdownMenuItem(text = { Text("الآية ${item.number}") }, onClick = {
+                                    selectedAyah = item.number
+                                    ayahMenuExpanded = false
+                                    prefs.edit().putInt("quran_surah_number", current.number).putString("quran_surah", current.name).putString("quran_ayah", selectedAyah.toString()).apply()
+                                    onPositionSelected(current.number, current.name, selectedAyah)
+                                })
                             }
-                            if (onSessionStart != null) {
-                                OutlinedButton(onClick = { onSessionStart(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("ابدأ القراءة")
-                                }
+                        }
+                        Text("مظهر المصحف", fontWeight = FontWeight.SemiBold, color = Color(0xFF164B3A))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("dark" to "أسود", "light" to "أبيض", "green" to "أخضر").forEach { (key, label) ->
+                                FilterChip(selected = readingTheme == key, onClick = {
+                                    readingTheme = key
+                                    prefs.edit().putString("qiyam_reader_theme", key).apply()
+                                }, label = { Text(label) })
                             }
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                OutlinedButton(onClick = {
-                                    if (selectedAyah > 1) {
-                                        selectedAyah--
-                                        prefs.edit().putString("quran_ayah", selectedAyah.toString()).apply()
-                                        onPositionSelected(current.number, current.name, selectedAyah)
-                                    }
-                                }, enabled = selectedAyah > 1) { Text("الآية السابقة") }
-                                Button(onClick = {
-                                    if (selectedAyah < current.ayahs.size) {
-                                        selectedAyah++
-                                        prefs.edit().putString("quran_ayah", selectedAyah.toString()).apply()
-                                        onPositionSelected(current.number, current.name, selectedAyah)
-                                    } else if (current.number < 114) {
-                                        val next = surahs.firstOrNull { it.number == current.number + 1 }
-                                        if (next != null) {
-                                            selectedNumber = next.number
-                                            selectedAyah = 1
-                                            prefs.edit().putInt("quran_surah_number", next.number).putString("quran_surah", next.name).putString("quran_ayah", "1").apply()
-                                            onPositionSelected(next.number, next.name, 1)
-                                        }
-                                    }
-                                }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A))) {
-                                    Text(if (selectedAyah < current.ayahs.size) "الآية التالية" else if (current.number < 114) "السورة التالية" else "آخر سورة")
-                                }
+                        }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFD6E5D7))) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("فضل قيام الليل", color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
+                                Text("أَفْضَلُ الصَّلَاةِ بَعْدَ الْفَرِيضَةِ صَلَاةُ اللَّيْلِ.")
+                                Text("صحيح مسلم، حديث ١١٦٣", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                             }
-                            Text("عند التوقف عن القراءة، اضغط على «تحديد موضع التوقف».", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
-                            OutlinedButton(onClick = { onPositionSelected(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) { Text("التوقف للركوع") }
+                        }
+                        Button(onClick = {
+                            onSessionStart?.invoke(current.number, current.name, selectedAyah)
+                            readerOpen = true
+                        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A))) {
+                            Text("ابدأ القراءة")
                         }
                     } else {
                         Text("اضغط على أي آية لتثبيت موضع القراءة الحالي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
@@ -286,5 +293,61 @@ fun QuranReaderSection(
                 }) { Text("شروط خدمة AlQuran Cloud") }
             }
         }
+    if (verseByVerse && readerOpen) {
+        val activeSurah = surahs.firstOrNull { it.number == selectedNumber }
+        val activeAyah = activeSurah?.ayahs?.getOrNull(selectedAyah - 1)
+        val pageBackground = when (readingTheme) {
+            "light" -> Color(0xFFF8F5EC)
+            "green" -> Color(0xFF183D32)
+            else -> Color.Black
+        }
+        val pageForeground = if (readingTheme == "light") Color(0xFF171717) else Color.White
+        val accent = Color(0xFFE0A12B)
+        Dialog(onDismissRequest = {
+            prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
+            readerOpen = false
+        }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            Surface(Modifier.fillMaxSize(), color = pageBackground) {
+                Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    Text("مصحف قيام الليل", color = pageForeground, style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Box(
+                        Modifier.weight(1f).fillMaxWidth().pointerInput(selectedNumber, selectedAyah, surahs) {
+                            detectHorizontalDragGestures(
+                                onHorizontalDrag = { _, amount -> dragDistance += amount },
+                                onDragEnd = {
+                                    if (dragDistance < -55f) {
+                                        if (activeSurah != null && selectedAyah < activeSurah.ayahs.size) selectedAyah++
+                                        else if (selectedNumber < 114) { selectedNumber++; selectedAyah = 1 }
+                                    } else if (dragDistance > 55f) {
+                                        if (selectedAyah > 1) selectedAyah--
+                                        else if (selectedNumber > 1) { selectedNumber--; selectedAyah = surahs.firstOrNull { it.number == selectedNumber }?.ayahs?.size ?: 1 }
+                                    }
+                                    dragDistance = 0f
+                                    val name = surahs.firstOrNull { it.number == selectedNumber }?.name.orEmpty()
+                                    prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", name).putString("quran_ayah", selectedAyah.toString()).apply()
+                                    onPositionSelected(selectedNumber, name, selectedAyah)
+                                }
+                            )
+                        },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (activeAyah != null && activeSurah != null) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                                Text(activeSurah.name, color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                Text(activeAyah.text, color = pageForeground, textAlign = TextAlign.Center, style = MaterialTheme.typography.headlineLarge, lineHeight = MaterialTheme.typography.headlineLarge.lineHeight)
+                            }
+                        }
+                    }
+                    Button(onClick = {
+                        prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
+                        readerOpen = false
+                    }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black)) {
+                        Text("إغلاق المصحف")
+                    }
+                }
+            }
+        }
+    }
+
     }
 }
