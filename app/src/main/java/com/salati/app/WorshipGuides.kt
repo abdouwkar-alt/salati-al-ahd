@@ -14,16 +14,16 @@ private val WorshipGreen = Color(0xFF164B3A)
 private val WorshipPale = Color(0xFFE5EBDD)
 
 @Composable
-fun QiyamTrackerScreen(prefs: SharedPreferences) {
+fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
     val todayDate = LocalDate.now()
     val today = todayDate.toString()
     val dayKey = "qiyam_verses_" + today
-    var verses by remember(today) { mutableIntStateOf(prefs.getInt(dayKey, if (prefs.getString("qiyam_date", "") == today) prefs.getInt("qiyam_verses", 0) else 0)) }
+    var verses by remember(today, refreshToken) { mutableIntStateOf(prefs.getInt(dayKey, if (prefs.getString("qiyam_date", "") == today) prefs.getInt("qiyam_verses", 0) else 0)) }
     var entered by remember { mutableStateOf("10") }
     var rakats by remember(today) { mutableStateOf(prefs.getInt("qiyam_rakats_" + today, 0).toString()) }
     var witrDone by remember(today) { mutableStateOf(prefs.getBoolean("qiyam_witr_" + today, false)) }
     val allPrefs = prefs.all
-    val history = remember(allPrefs, today) {
+    val history = remember(allPrefs, today, refreshToken) {
         (0L..29L).map { todayDate.minusDays(it) }.map { date ->
             val count = prefs.getInt("qiyam_verses_" + date, if (date == todayDate) verses else 0)
             date to count
