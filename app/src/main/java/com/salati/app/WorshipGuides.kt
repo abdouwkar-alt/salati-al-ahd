@@ -32,6 +32,10 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
     val weekTotal = history.take(7).sumOf { it.second }
     val monthTotal = history.sumOf { it.second }
     val activeNights = history.count { it.second >= 10 }
+    val weekRakats = history.take(7).sumOf { prefs.getInt("qiyam_rakats_" + it.first, 0) }
+    val monthRakats = history.sumOf { prefs.getInt("qiyam_rakats_" + it.first, 0) }
+    val weekWitrNights = history.take(7).count { prefs.getBoolean("qiyam_witr_" + it.first, false) }
+    val monthWitrNights = history.count { prefs.getBoolean("qiyam_witr_" + it.first, false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = WorshipGreen)) {
@@ -91,9 +95,10 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("محصلة قيام الليل", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                 Text("اليوم: $verses آية")
-                Text("آخر 7 أيام: $weekTotal آية")
-                Text("آخر 30 يومًا: $monthTotal آية")
+                Text("آخر 7 أيام: $weekTotal آية، و$weekRakats ركعة")
+                Text("آخر 30 يومًا: $monthTotal آية، و$monthRakats ركعة")
                 Text("ليالٍ بلغت عشر آيات على الأقل: $activeNights")
+                Text("الوتر: $weekWitrNights مرات في آخر 7 أيام، و$monthWitrNights مرة في آخر 30 يومًا")
                 Text("البيانات مبنية على ما سجلته، ولا تقيس الإخلاص أو القبول.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
             }
         }
