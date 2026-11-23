@@ -264,7 +264,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     onOpen = { section, destination, subTab ->
                         activeSection = section
-                        mainTab = destination
+                        mainTab = if (section == "الصلاة") "بوابة_الصلاة" else destination
                         sectionSubTab = subTab.ifBlank {
                             when (section) {
                                 "الصلاة" -> "الصلاة المفروضة"
@@ -303,7 +303,14 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات") {
                 item {
                     SectionNavigation(
-                        section = activeSection,
+                        section = when {
+                            activeSection == "الصلاة" && mainTab == "بوابة_الصلاة" -> "الصلاة"
+                            activeSection == "الصلاة" && (mainTab == "الصلاة" || mainTab.startsWith("فرض_")) -> "فرض"
+                            activeSection == "الصلاة" && (mainTab == "النوافل" || mainTab.startsWith("نافلة_")) -> "النوافل"
+                            activeSection == "الصلاة" && (mainTab == "قيام الليل" || mainTab.startsWith("قيام_")) -> "قيام الليل"
+                            activeSection == "الصلاة" && mainTab.startsWith("القضاء") -> "القضاء"
+                            else -> activeSection
+                        },
                         selected = sectionSubTab,
                         onSelect = { label, destination ->
                             sectionSubTab = label
@@ -314,7 +321,22 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 if (activeSection != "الصلاة") item { SectionSketch(section = activeSection) }
             }
 
-            if (mainTab == "الإنفاق") {
+            if (mainTab == "بوابة_الصلاة") {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("أبواب الصلاة", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                            Text("اختر الباب الذي تريد الدخول إليه.")
+                        }
+                    }
+                }
+            } else if (mainTab.startsWith("فرض_")) {
+                item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("فرض_"), isFard = true) }
+            } else if (mainTab.startsWith("نافلة_")) {
+                item { PrayerTopicLearningScreen(prayer = mainTab.removePrefix("نافلة_"), isFard = false) }
+            } else if (mainTab == "قيام_السنن") {
+                item { QiyamSunnahLearningScreen() }
+            } else if (mainTab == "الإنفاق") {
                 item {
                     SectionPlaceholder(
                         title = "الإنفاق",
