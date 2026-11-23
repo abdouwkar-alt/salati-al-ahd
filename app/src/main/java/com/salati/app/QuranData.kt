@@ -373,10 +373,10 @@ fun QuranReaderSection(
                             detectHorizontalDragGestures(
                                 onHorizontalDrag = { _, amount -> dragDistance += amount },
                                 onDragEnd = {
-                                    if (dragDistance > 55f) {
+                                    if (dragDistance < -55f) {
                                         if (activeSurah != null && selectedAyah < activeSurah.ayahs.size) selectedAyah++
                                         else if (selectedNumber < 114) { selectedNumber++; selectedAyah = 1 }
-                                    } else if (dragDistance < -55f) {
+                                    } else if (dragDistance > 55f) {
                                         if (selectedAyah > 1) selectedAyah--
                                         else if (selectedNumber > 1) { selectedNumber--; selectedAyah = surahs.firstOrNull { it.number == selectedNumber }?.ayahs?.size ?: 1 }
                                     }
