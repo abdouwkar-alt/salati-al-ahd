@@ -795,11 +795,11 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
                         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("جلسة قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                            Text("اضغط «اختر السورة» لفتح قائمة السور. عند التوقف، اضغط على آخر آية قرأتها لتسجيل موضعك وعدد الآيات.")
+                            Text("مصحف قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                            Text("اختر السورة، ثم اقرأ بتدبر وطمأنينة. يمكنك التوقف للركوع وحفظ موضعك، أو إنهاء القراءة للانتقال إلى تسجيل الصلاة.")
                         }
                     }
-                    Button(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("إنهاء الجلسة") }
+                    Button(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) { Text("إنهاء القراءة") }
                 }
                 item {
                     QuranReaderSection(
