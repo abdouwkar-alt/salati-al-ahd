@@ -2,6 +2,7 @@ plugins {
  id("com.android.application")
  id("org.jetbrains.kotlin.android")
  id("org.jetbrains.kotlin.plugin.compose")
+ id("com.github.jk1.dependency-license-report")
 }
 android {
  namespace = "com.salati.app"
