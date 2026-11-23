@@ -833,7 +833,11 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                 .putString("qiyam_active_end_surah_name", surahName).apply()
                             qiyamRefresh++
                         },
-                        onSessionFinish = { navigateTo("قيام_إنهاء") }
+                        onSessionFinish = {
+                             val readCount = prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.size ?: 0
+                             prefs.edit().putInt("qiyam_active_verses", readCount.coerceAtLeast(1)).apply()
+                             navigateTo("قيام_إنهاء")
+                         }
                     )
                 }
             } else if (mainTab == "الإحصائيات") {
