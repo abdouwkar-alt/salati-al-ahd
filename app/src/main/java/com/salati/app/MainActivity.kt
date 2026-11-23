@@ -806,7 +806,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     }
                 }
                 item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
-            }            } else if (mainTab == "الإحصائيات") {
+            } else if (mainTab == "الإحصائيات") {
                 item {
                     PrayerStatisticsScreen(
                         prefs = prefs,
