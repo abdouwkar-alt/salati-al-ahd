@@ -769,42 +769,39 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             } else if (mainTab == "قيام الليل") {
                 item {
                     Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("مراتب القيام بالقرآن", style = MaterialTheme.typography.titleLarge, color = Green, fontWeight = FontWeight.Bold)
-                            Text("قال رسول الله ﷺ: «من قام بعشر آيات لم يكتب من الغافلين، ومن قام بمئة آية كتب من القانتين، ومن قام بألف آية كتب من المقنطرين».")
-                            Text("سنن أبي داود (1398) — حسّنه عدد من أهل العلم.", color = Color(0xFF6D716A), style = MaterialTheme.typography.bodySmall)
-                            Text(nightWindow + " — وقت تقديري للثلث الأخير.")
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                            Text("اختر بين التعرف على السنن وبدء جلسة مستقلة للقراءة والتسجيل.")
                         }
                     }
                 }
-                item { GuideCard("سنن قيام الليل", listOf(
-                    SunnahItem("السواك عند الاستيقاظ من النوم", "سنة ثابتة", "كان النبي ﷺ إذا قام من الليل يشوص فاه بالسواك.", "صحيح البخاري 245؛ صحيح مسلم 255"),
-                    SunnahItem("افتتاح صلاة الليل بركعتين خفيفتين", "هدي نبوي ثابت", "إذا قام أحدكم من الليل فليفتتح صلاته بركعتين خفيفتين.", "صحيح مسلم 768"),
-                    SunnahItem("صلاة الليل مثنى مثنى", "صفة ثابتة", "صلاة الليل ركعتين ركعتين، ويختم المصلي بوتر.", "صحيح البخاري 990؛ صحيح مسلم 749"),
-                    SunnahItem("صفة صلاة الوتر", "خاتمة صلاة الليل", "اجعل آخر صلاتك بالليل وترًا. ويصح أن توتر بركعة واحدة بعد صلاة الليل، وقد وردت صور متعددة للوتر؛ فلا يحصر التطبيق العبادة في هيئة واحدة، وتفاصيل بعض الصور محل خلاف فقهي.", "صحيح البخاري 998؛ صحيح مسلم 751"),
-                    SunnahItem("إطالة القيام والقراءة بحسب الاستطاعة", "هدي نبوي", "كان النبي ﷺ يطيل القيام والقراءة، ويشرع للمسلم أن يصلي ما تيسر له دون تكلف.", "صحيح البخاري 1135؛ صحيح مسلم 738"),
-                    SunnahItem("القنوت في الوتر", "دعاء ثابت", "ورد دعاء: اللهم اهدني فيمن هديت، وعافني فيمن عافيت، وتولني فيمن توليت...", "سنن أبي داود 1425؛ جامع الترمذي 464، صححه أهل العلم")
-                )) }
+            } else if (mainTab == "قيام_الجلسة") {
                 item {
-                    Text("المصحف داخل قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("جلسة قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                            Text("اختر السورة واقرأ آية آية. يُحفظ موضع القراءة، ويُحسب نطاق الآيات الذي سجلته لهذه الجلسة.")
+                        }
+                    }
+                }
+                item {
                     QuranReaderSection(prefs = prefs, context = context) { surahNumber, surahName, ayahNumber ->
-                        val dayKey = "qiyam_verses_" + today
-                        val old = prefs.getInt(dayKey, 0)
-                        val lastSurah = prefs.getInt("qiyam_session_surah_" + today, -1)
-                        val counted = if (lastSurah == surahNumber) maxOf(old, ayahNumber) else old + ayahNumber
+                        val global = quranGlobalAyahIndex(surahNumber, ayahNumber)
+                        val start = prefs.getInt("qiyam_active_start", -1).let { if (it < 0) global else it }
+                        val sessionVerses = (global - start + 1).coerceAtLeast(0)
                         prefs.edit()
-                            .putInt(dayKey, counted)
+                            .putInt("qiyam_active_start", start)
+                            .putInt("qiyam_active_end", global)
+                            .putInt("qiyam_active_verses", sessionVerses)
                             .putInt("qiyam_session_surah_" + today, surahNumber)
                             .putInt("qiyam_session_ayah_" + today, ayahNumber)
                             .putString("qiyam_session_surah_name_" + today, surahName)
-                            .putInt("qiyam_verses", counted)
-                            .putString("qiyam_date", today.toString())
                             .apply()
                         qiyamRefresh++
                     }
                 }
-                item { QiyamTrackerScreen(prefs = prefs, refreshToken = qiyamRefresh) }
-            } else if (mainTab == "الإحصائيات") {
+                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
+            }            } else if (mainTab == "الإحصائيات") {
                 item {
                     PrayerStatisticsScreen(
                         prefs = prefs,
