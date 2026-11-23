@@ -1,7 +1,7 @@
 name: Android APK
 on:
   push:
-    branches: [ main, salati-app ]
+    branches: [ main, salati-app, 'ui/**' ]
   workflow_dispatch:
 permissions:
   contents: read
