@@ -436,7 +436,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                                         }
                                                     }
                                                 }
-                                                TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; mainTab = "السنن_الصلوات" }) {
+                                                TextButton(onClick = { selectedPrayerGuide = prayer.name; sunnahTab = "سنن الصلاة"; navigateTo("فرض_" + prayer.name) }) {
                                                     Text("السنن والأحاديث", style = MaterialTheme.typography.labelSmall)
                                                 }
                                             }
@@ -450,7 +450,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                                         Text(nightWindow + "، وهو تقدير للثلث الأخير من الليل.")
                                         Text("أفضلُ الصلاةِ بعدَ الفريضةِ صلاةُ الليلِ.", color = Green, style = MaterialTheme.typography.bodyMedium)
                                         Text("صحيح مسلم (1163).", color = Color(0xFF77736B), style = MaterialTheme.typography.labelSmall)
-                                        TextButton(onClick = { mainTab = "قيام الليل" }) { Text("متابعة قيام الليل والسنن والأحاديث") }
+                                        TextButton(onClick = { navigateTo("قيام الليل") }) { Text("متابعة قيام الليل والسنن والأحاديث") }
                                     }
                                 }
                             }
