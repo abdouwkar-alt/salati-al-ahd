@@ -351,7 +351,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             } else if (mainTab == "قيام_السجل") {
                 item { QiyamHistoryScreen(prefs = prefs) }
             } else if (mainTab == "قيام_إنهاء") {
-                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++; navigateTo("قيام_السجل") } }
+                item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
             } else if (mainTab == "الإنفاق") {
                 item {
                     SectionPlaceholder(
