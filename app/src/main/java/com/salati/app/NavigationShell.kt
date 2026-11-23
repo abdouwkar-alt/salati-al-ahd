@@ -217,3 +217,27 @@ private fun JourneySketch(modifier: Modifier = Modifier) {
         drawCircle(Color(0xFF8E9A78), 4.dp.toPx(), Offset(size.width*.84f,size.height*.30f))
     }
 }
+
+data class DhikrBurst(val id: Int, val position: Offset)
+
+@Composable
+fun DhikrBurstLabel(burst: DhikrBurst, onFinished: () -> Unit) {
+    val rise = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(0f) }
+    val alpha = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(1f) }
+    androidx.compose.runtime.LaunchedEffect(burst.id) {
+        kotlinx.coroutines.coroutineScope {
+            launch { rise.animateTo(54f, androidx.compose.animation.core.tween(520)) }
+            launch { alpha.animateTo(0f, androidx.compose.animation.core.tween(520)) }
+        }
+        onFinished()
+    }
+    Text(
+        "أستغفر الله",
+        color = ShellGreen,
+        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier
+            .offset { androidx.compose.ui.unit.IntOffset(burst.position.x.toInt(), burst.position.y.toInt() - rise.value.toInt()) }
+            .graphicsLayer { this.alpha = alpha.value }
+    )
+}
