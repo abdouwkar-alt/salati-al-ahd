@@ -17,6 +17,7 @@ private val ReadinessSunnahSlots = listOf("قبل الفجر", "قبل الظه�
 
 object QadaReadiness {
     fun isUnlocked(prefs: SharedPreferences, today: LocalDate): Boolean {
+        if (prefs.getBoolean("qada_readiness_unlocked", false)) return true
         val streak = consecutivePrayerDays(prefs, today)
         val dates = (0L..29L).map { today.minusDays(it) }
         val houses = dates.count { date -> rawatibCount(prefs, date) >= 12 }
@@ -67,6 +68,9 @@ fun QadaReadinessScreen(
     val houseDays = dates.count { QadaReadiness.rawatibCount(prefs, it) >= 12 }
     val qiyamNights = dates.count { QadaReadiness.qiyamVerses(prefs, it) >= 10 }
     val unlocked = streak >= 30 && houseDays >= 1 && qiyamNights >= 10
+    if (unlocked) androidx.compose.runtime.SideEffect {
+        prefs.edit().putBoolean("qada_readiness_unlocked", true).apply()
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = ReadinessGreen)) {
