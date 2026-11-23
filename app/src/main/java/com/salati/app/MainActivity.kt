@@ -192,6 +192,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     val nightWindow = "الثلث الأخير تقريبًا: " + Instant.ofEpochMilli(lastThirdStart).atZone(ZoneId.systemDefault()).format(timeFormatter)
     val nextPrayer = (todayTimes + tomorrowTimes).firstOrNull { it.time > clockNow } ?: tomorrowTimes.first()
     val dateFormatter = DateTimeFormatter.ofPattern("EEEE، d MMMM yyyy", Locale("ar"))
+    val hijriDateText = try { DateTimeFormatter.ofPattern("EEEE، d MMMM yyyy", Locale("ar")).format(java.time.chrono.HijrahDate.from(today)) } catch (_: Exception) { "التاريخ الهجري غير متاح" }
     val nextDuration = ((nextPrayer.time - clockNow).coerceAtLeast(0L) / 1000L)
     val countdown = "%02d:%02d:%02d".format(nextDuration / 3600, (nextDuration % 3600) / 60, nextDuration % 60)
 
@@ -253,15 +254,40 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 }
             }
         ) {
-        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp), userScrollEnabled = mainTab != "الرئيسية") {
-            item {
-                Card(colors = CardDefaults.cardColors(containerColor = Green)) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("الصَّلَاةُ جَامِعَةٌ", style = MaterialTheme.typography.headlineLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                        Text("\u2067﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَوْقُوتًا﴾ [النساء: 103]\u2069", color = Color.White.copy(alpha = 0.9f))
+        if (mainTab == "الرئيسية") {
+            Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                HomeDashboard(
+                    dateText = hijriDateText,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    onOpen = { section, destination, subTab ->
+                        activeSection = section
+                        mainTab = destination
+                        sectionSubTab = subTab.ifBlank {
+                            when (section) {
+                                "الصلاة" -> "الصلاة المفروضة"
+                                "الصوم" -> "الصيام"
+                                "الأذكار" -> "مكتبة الأذكار"
+                                "الدعاء" -> "مكتبة الأدعية"
+                                "سنن الرسول ﷺ" -> "سنن الصلاة"
+                                "تدبر القرآن" -> "المصحف والتدبر"
+                                "التفكر" -> "التفكر"
+                                "التفقه" -> "فقه الصلاة"
+                                else -> ""
+                            }
+                        }
                     }
-                }
+                )
+                BottomNavigationBar(selected = activeSection, onSelect = { destination ->
+                    activeSection = destination
+                    mainTab = when (destination) {
+                        "البداية" -> "الرئيسية"
+                        "الإحصائيات" -> "الإحصائيات"
+                        else -> "الإعدادات"
+                    }
+                })
             }
+        } else {
+        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
@@ -279,30 +305,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item { SectionSketch(section = activeSection) }
             }
 
-            if (mainTab == "الرئيسية") {
-                item {
-                    HomeDashboard(
-                        dateText = today.format(dateFormatter),
-                        onOpen = { section, destination, subTab ->
-                            activeSection = section
-                            mainTab = destination
-                            sectionSubTab = subTab.ifBlank {
-                                when (section) {
-                                    "الصلاة" -> "الصلاة المفروضة"
-                                    "الصوم" -> "الصيام"
-                                    "الأذكار" -> "مكتبة الأذكار"
-                                    "الدعاء" -> "مكتبة الأدعية"
-                                    "سنن الرسول ﷺ" -> "سنن الصلاة"
-                                    "تدبر القرآن" -> "المصحف والتدبر"
-                                    "التفكر" -> "التفكر"
-                                    "التفقه" -> "فقه الصلاة"
-                                    else -> ""
-                                }
-                            }
-                        }
-                    )
-                }
-            } else if (mainTab == "الإنفاق") {
+            if (mainTab == "الإنفاق") {
                 item {
                     SectionPlaceholder(
                         title = "الإنفاق",
@@ -839,6 +842,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 )
             }
             item { Spacer(Modifier.height(12.dp)) }
+        }
         }
         dhikrBursts.forEach { burst ->
             DhikrBurstLabel(burst = burst, onFinished = { dhikrBursts.remove(burst) })
