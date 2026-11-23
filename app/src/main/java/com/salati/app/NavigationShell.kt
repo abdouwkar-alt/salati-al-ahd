@@ -73,7 +73,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
     val prayerY = .91f
     val selected = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val opened = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    val progress = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(0f) }
+    val progress = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
     val prayerProgress = androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (opened.intValue == 8) 1f else 0f,
         animationSpec = androidx.compose.animation.core.tween(850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
