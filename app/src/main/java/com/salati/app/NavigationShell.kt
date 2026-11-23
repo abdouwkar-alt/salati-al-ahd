@@ -30,21 +30,22 @@ private val ShellLine = Color(0xFFD8D2C4)
 @Composable
 fun HomeDashboard(
     dateText: String,
-    onOpen: (section: String, destination: String, subTab: String) -> Unit
+    onOpen: (section: String, destination: String, subTab: String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = ShellGreen), shape = RoundedCornerShape(18.dp)) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("أشهد أن لا إله إلا الله، وأشهد أن محمدًا رسول الله", color = Color.White, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(5.dp))
                 Surface(color = ShellCream, shape = RoundedCornerShape(24.dp)) {
-                    Text("رضيت بالله ربًا، وبالإسلام دينًا، وبمحمدٍ رسولًا", color = ShellGreen, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
+                    Text("رضيت بالله ربًا، وبالإسلام دينًا، وبمحمدٍ رسولًا", color = ShellGreen, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(dateText, color = Color.White.copy(alpha = .78f), style = MaterialTheme.typography.labelSmall)
             }
         }
-        JourneyHome(onOpen = onOpen)
+        JourneyHome(onOpen = onOpen, modifier = Modifier.weight(1f).fillMaxWidth())
     }
 }
 
@@ -57,22 +58,22 @@ private data class JourneyDoor(
 )
 
 @Composable
-private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
+private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modifier = Modifier) {
     val doors = listOf(
-        JourneyDoor("الإنفاق", "الإنفاق", "الإنفاق", .76f, .17f),
-        JourneyDoor("الصدقات", "الإنفاق", "الإنفاق", .24f, .27f),
-        JourneyDoor("الصوم", "الصوم", "الصوم", .76f, .38f),
-        JourneyDoor("التفقه", "التفقه", "فقه الصلاة", .24f, .49f),
-        JourneyDoor("الأذكار", "الأذكار", "الأذكار", .76f, .60f),
-        JourneyDoor("سنن الرسول ﷺ", "سنن الرسول ﷺ", "السنن", .24f, .71f),
-        JourneyDoor("الدعاء", "الدعاء", "الأدعية", .76f, .82f),
-        JourneyDoor("القرآن", "تدبر القرآن", "تدبر القرآن", .24f, .77f)
+        JourneyDoor("الإنفاق", "الإنفاق", "الإنفاق", .76f, .14f),
+        JourneyDoor("الصدقات", "الإنفاق", "الإنفاق", .24f, .23f),
+        JourneyDoor("الصوم", "الصوم", "الصوم", .76f, .32f),
+        JourneyDoor("التفقه", "التفقه", "فقه الصلاة", .24f, .41f),
+        JourneyDoor("الأذكار", "الأذكار", "الأذكار", .76f, .50f),
+        JourneyDoor("سنن الرسول ﷺ", "سنن الرسول ﷺ", "السنن", .24f, .59f),
+        JourneyDoor("القرآن", "تدبر القرآن", "تدبر القرآن", .76f, .68f),
+        JourneyDoor("الدعاء", "الدعاء", "الأدعية", .24f, .77f)
     )
     val prayerX = .5f
-    val prayerY = .88f
+    val prayerY = .91f
     val selected = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val opened = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    val progress = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
+    val progress = androidx.compose.animation.core.remember { androidx.compose.animation.core.Animatable(0f) }
     val prayerProgress = androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (opened.intValue == 8) 1f else 0f,
         animationSpec = androidx.compose.animation.core.tween(850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
@@ -89,15 +90,14 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         "وَسَارِعُوا إِلَىٰ مَغْفِرَةٍ مِنْ رَبِّكُمْ"
     )
     val currentVerse = if (selected.intValue < 0) verses[0] else verses[(selected.intValue + 1) % verses.size]
-    val height = 900.dp
-    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(height)) {
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier) {
         val density = androidx.compose.ui.platform.LocalDensity.current
-        val walkerHalfWidthPx = with(density) { 14.dp.toPx() }
-        val walkerHalfHeightPx = with(density) { 27.dp.toPx() }
-        val widthPx = with(androidx.compose.ui.platform.LocalDensity.current) { maxWidth.toPx() }
-        val heightPx = with(androidx.compose.ui.platform.LocalDensity.current) { height.toPx() }
+        val widthPx = with(density) { maxWidth.toPx() }
+        val heightPx = with(density) { maxHeight.toPx() }
+        val doorHeight = (maxHeight * .105f).coerceIn(42.dp, 58.dp)
+        val doorWidth = (maxWidth * .25f).coerceIn(76.dp, 94.dp)
         val points = buildList {
-            add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .105f))
+            add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .055f))
             doors.forEach { add(androidx.compose.ui.geometry.Offset(widthPx * it.x, heightPx * it.y)) }
             add(androidx.compose.ui.geometry.Offset(widthPx * prayerX, heightPx * prayerY))
         }
@@ -112,46 +112,38 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
             val path = androidx.compose.ui.graphics.Path()
             route.forEachIndexed { index, sample ->
-                if (index == 0) path.moveTo(sample.point.x, sample.point.y)
-                else path.lineTo(sample.point.x, sample.point.y)
+                if (index == 0) path.moveTo(sample.point.x, sample.point.y) else path.lineTo(sample.point.x, sample.point.y)
             }
-            drawPath(path, Color(0xFFD8C9A9).copy(alpha = .36f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 17.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
-            drawPath(path, Color(0xFFB9A77F).copy(alpha = .82f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 8.dp.toPx())), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+            drawPath(path, Color(0xFFD8C9A9).copy(alpha = .36f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 13.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+            drawPath(path, Color(0xFFB9A77F).copy(alpha = .82f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.8.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 7.dp.toPx())), cap = androidx.compose.ui.graphics.StrokeCap.Round))
         }
         Text(
             "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
             modifier = Modifier.align(Alignment.TopCenter).padding(top = 0.dp),
             color = ShellGreen, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.labelLarge
         )
         doors.forEachIndexed { index, door ->
             val doorOpen = opened.intValue == index
-            val width = maxWidth * .22f
             Column(
                 modifier = Modifier.offset(
-                    x = maxWidth * door.x - width / 2,
-                    y = height * door.y - 62.dp
-                ).width(width),
+                    x = maxWidth * door.x - doorWidth / 2,
+                    y = maxHeight * door.y - doorHeight * .42f
+                ).width(doorWidth),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Text(door.title, color = ShellGreen, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 1, style = MaterialTheme.typography.labelLarge)
-                JourneyDoorGraphic(open = doorOpen, onOpen = {
-                    selected.intValue = index
-                    opened.intValue = -1
-                })
+                Text(door.title, color = ShellGreen, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 1, style = MaterialTheme.typography.labelSmall)
+                JourneyDoorGraphic(open = doorOpen, onOpen = { selected.intValue = index; opened.intValue = -1 }, compactHeight = doorHeight)
             }
         }
         Column(
-            modifier = Modifier.offset(x = maxWidth * prayerX - 76.dp, y = height * prayerY - 68.dp).width(152.dp),
+            modifier = Modifier.offset(x = maxWidth * prayerX - maxWidth * .18f, y = maxHeight * prayerY - 38.dp).width(maxWidth * .36f),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(7.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Text("الصلاة جامعة", color = ShellGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            PrayerDoorGraphic(openProgress = prayerProgress.value, onOpen = {
-                selected.intValue = 8
-                opened.intValue = 8
-            })
+            Text("الصلاة جامعة", color = ShellGreen, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, style = MaterialTheme.typography.labelLarge)
+            PrayerDoorGraphic(openProgress = prayerProgress.value, onOpen = { selected.intValue = 8; opened.intValue = 8 }, compact = true)
             Text("عماد الدين", color = ShellGreen.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
         }
         val walkerPoint = routePointAt(route, routeLength * progress.value)
@@ -160,60 +152,40 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
                 currentVerse,
                 modifier = Modifier.offset {
                     androidx.compose.ui.unit.IntOffset(
-                        (walkerPoint.x - widthPx * .41f).roundToInt(),
-                        (walkerPoint.y - with(density) { 76.dp.toPx() }).roundToInt()
+                        (walkerPoint.x - widthPx * .40f).roundToInt(),
+                        (walkerPoint.y - with(density) { 48.dp.toPx() }).roundToInt()
                     )
-                }.width(maxWidth * .82f),
+                }.width(maxWidth * .80f),
                 color = ShellGreen, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.labelSmall
             )
         }
-        if (selected.intValue >= 0) {
-            androidx.compose.foundation.Canvas(
-                Modifier.offset {
-                    androidx.compose.ui.unit.IntOffset(
-                        (walkerPoint.x - walkerHalfWidthPx).roundToInt(),
-                        (walkerPoint.y - walkerHalfHeightPx).roundToInt()
-                    )
-                }.size(28.dp, 54.dp)
-            ) {
-                val c = Color(0xFF59675D)
-                drawCircle(c, 5.5.dp.toPx(), androidx.compose.ui.geometry.Offset(size.width / 2, 7.dp.toPx()))
-                drawRoundRect(c, androidx.compose.ui.geometry.Offset(size.width * .31f, 15.dp.toPx()), androidx.compose.ui.geometry.Size(size.width * .38f, 20.dp.toPx()), androidx.compose.ui.geometry.CornerRadius(8.dp.toPx()))
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .34f, 19.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .12f, 32.dp.toPx()), 3.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .66f, 19.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .88f, 32.dp.toPx()), 3.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                val swing = if (progress.value % .08f < .04f) 1f else -1f
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .43f, 33.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .28f, (48f + swing * 3f).dp.toPx()), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .57f, 33.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .72f, (48f - swing * 3f).dp.toPx()), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-            }
-        } else {
-            androidx.compose.foundation.Canvas(
-                Modifier.offset(x = maxWidth * .5f - 14.dp, y = 62.dp).size(28.dp, 54.dp)
-            ) {
-                val c = Color(0xFF59675D)
-                drawCircle(c, 5.5.dp.toPx(), androidx.compose.ui.geometry.Offset(size.width / 2, 7.dp.toPx()))
-                drawRoundRect(c, androidx.compose.ui.geometry.Offset(size.width * .31f, 15.dp.toPx()), androidx.compose.ui.geometry.Size(size.width * .38f, 20.dp.toPx()), androidx.compose.ui.geometry.CornerRadius(8.dp.toPx()))
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .34f, 19.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .12f, 32.dp.toPx()), 3.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .66f, 19.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .88f, 32.dp.toPx()), 3.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .43f, 33.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .28f, 49.dp.toPx()), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .57f, 33.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .72f, 49.dp.toPx()), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-            }
+        androidx.compose.foundation.Canvas(
+            Modifier.offset {
+                val p = if (selected.intValue >= 0) walkerPoint else androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .055f)
+                androidx.compose.ui.unit.IntOffset((p.x - with(density) { 12.dp.toPx() }).roundToInt(), (p.y - with(density) { 22.dp.toPx() }).roundToInt())
+            }.size(24.dp, 44.dp)
+        ) {
+            val c = Color(0xFF59675D)
+            drawCircle(c, 5.dp.toPx(), androidx.compose.ui.geometry.Offset(size.width / 2, 6.dp.toPx()))
+            drawRoundRect(c, androidx.compose.ui.geometry.Offset(size.width * .31f, 13.dp.toPx()), androidx.compose.ui.geometry.Size(size.width * .38f, 17.dp.toPx()), androidx.compose.ui.geometry.CornerRadius(7.dp.toPx()))
+            drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .34f, 17.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .12f, 28.dp.toPx()), 3.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .66f, 17.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .88f, 28.dp.toPx()), 3.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            val swing = if (progress.value % .08f < .04f) 1f else -1f
+            drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .43f, 29.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .28f, (40f + swing * 2f).dp.toPx()), 3.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .57f, 29.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .72f, (40f - swing * 2f).dp.toPx()), 3.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
         }
         androidx.compose.runtime.LaunchedEffect(selected.intValue, targetProgress) {
             if (selected.intValue >= 0) {
                 progress.snapTo(0f)
-                progress.animateTo(
-                    targetProgress,
-                    animationSpec = androidx.compose.animation.core.tween(
-                        durationMillis = (2600 + (selected.intValue + 1) * 1050).coerceAtMost(11200),
-                        easing = androidx.compose.animation.core.LinearEasing
-                    )
-                )
+                progress.animateTo(targetProgress, animationSpec = androidx.compose.animation.core.tween(
+                    durationMillis = (2200 + (selected.intValue + 1) * 650).coerceAtMost(7800),
+                    easing = androidx.compose.animation.core.LinearEasing
+                ))
                 opened.intValue = selected.intValue
                 kotlinx.coroutines.delay(900)
                 val door = if (selected.intValue == 8) null else doors[selected.intValue]
-                if (door != null) onOpen(door.section, door.destination, "")
-                else onOpen("الصلاة", "الصلاة", "")
+                if (door != null) onOpen(door.section, door.destination, "") else onOpen("الصلاة", "الصلاة", "")
                 selected.intValue = -1
             }
         }
@@ -264,19 +236,19 @@ private fun routePointAt(route: List<JourneySample>, distance: Float): androidx.
 }
 
 @Composable
-private fun JourneyDoorGraphic(open: Boolean, onOpen: () -> Unit) {
+private fun JourneyDoorGraphic(open: Boolean, onOpen: () -> Unit, compactHeight: androidx.compose.ui.unit.Dp = 112.dp) {
     val angleState = androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (open) 68f else 0f,
         animationSpec = androidx.compose.animation.core.tween(850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "doorLeaves"
     )
-    JourneyDoorGraphic(openProgress = angleState.value / 68f, onOpen = onOpen)
+    JourneyDoorGraphic(openProgress = angleState.value / 68f, onOpen = onOpen, compactHeight = compactHeight)
 }
 
 @Composable
-private fun JourneyDoorGraphic(openProgress: Float, onOpen: () -> Unit) {
+private fun JourneyDoorGraphic(openProgress: Float, onOpen: () -> Unit, compactHeight: androidx.compose.ui.unit.Dp = 112.dp) {
     Row(
-        Modifier.widthIn(min = 70.dp, max = 92.dp).height(112.dp).clickable(onClick = onOpen),
+        Modifier.widthIn(min = 70.dp, max = 92.dp).height(compactHeight).clickable(onClick = onOpen),
         horizontalArrangement = Arrangement.Center
     ) {
         Box(Modifier.weight(1f).fillMaxHeight().graphicsLayer {
@@ -313,9 +285,9 @@ private fun DoorLeaf() {
 }
 
 @Composable
-private fun PrayerDoorGraphic(openProgress: Float, onOpen: () -> Unit) {
+private fun PrayerDoorGraphic(openProgress: Float, onOpen: () -> Unit, compact: Boolean = false) {
     Row(
-        Modifier.width(152.dp).height(142.dp).clickable(onClick = onOpen),
+        Modifier.fillMaxWidth().height(if (compact) 72.dp else 142.dp).clickable(onClick = onOpen),
         horizontalArrangement = Arrangement.Center
     ) {
         listOf(false, true).forEach { right ->
