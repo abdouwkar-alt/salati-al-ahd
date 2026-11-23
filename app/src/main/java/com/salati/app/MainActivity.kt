@@ -23,6 +23,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.mutableStateListOf
+import kotlin.math.roundToInt
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -222,7 +229,30 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             onFirstLaunchAccepted()
         }
     } else {
+    val dhikrBursts = remember { mutableStateListOf<DhikrBurst>() }
+    var dhikrBurstId by remember { mutableIntStateOf(0) }
     Surface(Modifier.fillMaxSize(), color = Cream) {
+        Box(
+            Modifier.fillMaxSize().pointerInput(Unit) {
+                val starts = mutableMapOf<Long, Offset>()
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Final)
+                        event.changes.forEach { change ->
+                            if (change.pressed && !change.previousPressed) {
+                                starts[change.id.value] = change.position
+                            } else if (!change.pressed && change.previousPressed) {
+                                val start = starts.remove(change.id.value)
+                                if (start != null && (change.position - start).getDistance() < 18.dp.toPx() && change.isConsumed) {
+                                    dhikrBurstId += 1
+                                    dhikrBursts.add(DhikrBurst(dhikrBurstId, change.position))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ) {
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = Green)) {
@@ -797,6 +827,10 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 )
             }
             item { Spacer(Modifier.height(12.dp)) }
+        }
+        dhikrBursts.forEach { burst ->
+            DhikrBurstLabel(burst = burst, onFinished = { dhikrBursts.remove(burst) })
+        }
         }
     }
     }
