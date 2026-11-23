@@ -94,8 +94,8 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
         val density = androidx.compose.ui.platform.LocalDensity.current
         val widthPx = with(density) { maxWidth.toPx() }
         val heightPx = with(density) { maxHeight.toPx() }
-        val doorHeight = (maxHeight * .07f).coerceIn(30.dp, 38.dp)
-        val doorWidth = (maxWidth * .23f).coerceIn(70.dp, 84.dp)
+        val doorHeight = (maxHeight * .085f).coerceIn(42.dp, 50.dp)
+        val doorWidth = (maxWidth * .205f).coerceIn(64.dp, 76.dp)
         val points = buildList {
             add(androidx.compose.ui.geometry.Offset(widthPx * .5f, heightPx * .055f))
             doors.forEach { add(androidx.compose.ui.geometry.Offset(widthPx * it.x, heightPx * it.y)) }
@@ -179,7 +179,7 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit, modifier: Modi
             if (selected.intValue >= 0) {
                 progress.snapTo(0f)
                 progress.animateTo(targetProgress, animationSpec = androidx.compose.animation.core.tween(
-                    durationMillis = (2200 + (selected.intValue + 1) * 650).coerceAtMost(7800),
+                    durationMillis = (3200 + (selected.intValue + 1) * 800).coerceAtMost(9600),
                     easing = androidx.compose.animation.core.LinearEasing
                 ))
                 opened.intValue = selected.intValue
