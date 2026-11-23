@@ -270,10 +270,10 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                     onOpen = { section, destination, subTab ->
                         activeSection = section
                         navigationHistory.clear()
-                        mainTab = destination
+                        mainTab = if (section == "الصلاة") "بوابة_الصلاة" else destination
                         sectionSubTab = subTab.ifBlank {
                             when (section) {
-                                "الصلاة" -> "الصلاة المفروضة"
+                                "الصلاة" -> "تسجيل الصلاة"
                                 "الصوم" -> "الصيام"
                                 "الأذكار" -> "مكتبة الأذكار"
                                 "الدعاء" -> "مكتبة الأدعية"
@@ -316,8 +316,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item {
                     SectionNavigation(
                         section = when {
-                            activeSection == "الصلاة" && mainTab == "بوابة_الصلاة" -> "الصلاة"
-                            activeSection == "الصلاة" && (mainTab == "فرض" || mainTab == "الصلاة" || mainTab.startsWith("فرض_")) -> "فرض"
+                            activeSection == "الصلاة" && (mainTab == "بوابة_الصلاة" || mainTab == "فرض" || mainTab == "الصلاة" || mainTab.startsWith("فرض_")) -> "الصلاة"
                             activeSection == "الصلاة" && (mainTab == "النوافل" || mainTab.startsWith("نافلة_")) -> "النوافل"
                             activeSection == "الصلاة" && (mainTab == "قيام الليل" || mainTab.startsWith("قيام_")) -> "قيام الليل"
                             activeSection == "الصلاة" && mainTab.startsWith("القضاء") -> "القضاء"
