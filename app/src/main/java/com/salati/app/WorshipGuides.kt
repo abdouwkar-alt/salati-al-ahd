@@ -22,6 +22,7 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
     var entered by remember { mutableStateOf("10") }
     var rakats by remember(today) { mutableStateOf(prefs.getInt("qiyam_rakats_" + today, 0).toString()) }
     var witrDone by remember(today) { mutableStateOf(prefs.getBoolean("qiyam_witr_" + today, false)) }
+    var sessions by remember(today) { mutableIntStateOf(prefs.getInt("qiyam_sessions_" + today, 0)) }
     val allPrefs = prefs.all
     val history = remember(allPrefs, today, refreshToken) {
         (0L..29L).map { todayDate.minusDays(it) }.map { date ->
@@ -36,6 +37,8 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
     val monthRakats = history.sumOf { prefs.getInt("qiyam_rakats_" + it.first, 0) }
     val weekWitrNights = history.take(7).count { prefs.getBoolean("qiyam_witr_" + it.first, false) }
     val monthWitrNights = history.count { prefs.getBoolean("qiyam_witr_" + it.first, false) }
+    val weekSessions = history.take(7).sumOf { prefs.getInt("qiyam_sessions_" + it.first, 0) }
+    val monthSessions = history.sumOf { prefs.getInt("qiyam_sessions_" + it.first, 0) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = WorshipGreen)) {
@@ -48,6 +51,12 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Text("جلسة قيام الليل", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text("الجلسات المسجلة اليوم: $sessions")
+                Button(onClick = {
+                    sessions++
+                    prefs.edit().putInt("qiyam_sessions_" + today, sessions).apply()
+                }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = WorshipGreen)) { Text("بدء جلسة جديدة") }
                 Text("عدد الركعات والوتر", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                 OutlinedTextField(value = rakats, onValueChange = { rakats = it.filter(Char::isDigit).take(2) }, label = { Text("عدد ركعات قيام الليل") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -99,6 +108,7 @@ fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
                 Text("آخر 30 يومًا: $monthTotal آية، و$monthRakats ركعة")
                 Text("ليالٍ بلغت عشر آيات على الأقل: $activeNights")
                 Text("الوتر: $weekWitrNights مرات في آخر 7 أيام، و$monthWitrNights مرة في آخر 30 يومًا")
+                Text("جلسات القيام: $weekSessions في آخر 7 أيام، و$monthSessions في آخر 30 يومًا")
                 Text("البيانات مبنية على ما سجلته، ولا تقيس الإخلاص أو القبول.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
             }
         }
