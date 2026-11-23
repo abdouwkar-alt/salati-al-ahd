@@ -206,9 +206,43 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 Text("\u2067﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَوْقُوتًا﴾ [النساء: 103]\u2069", color = Color(0xFF6D716A))
             }
             item {
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("الصلاة", "الإحصائيات", "الأذكار", "الأدعية", "القضاء", "السنن العملية", "فقه الوضوء", "فقه الصلاة", "تدبر القرآن", "الإعدادات").forEach { tab ->
-                        FilterChip(selected = mainTab == tab, onClick = { mainTab = tab }, label = { Text(tab) })
+                val primarySections = listOf("الرئيسية", "المتابعة", "التعلّم", "الإعدادات")
+                val sectionTabs = when (mainTab) {
+                    "الصلاة", "الإحصائيات" -> listOf("الصلاة", "الإحصائيات")
+                    "القضاء" -> listOf("القضاء")
+                    "الإعدادات" -> listOf("الإعدادات")
+                    else -> listOf("الأذكار", "الأدعية", "السنن العملية", "فقه الوضوء", "فقه الصلاة", "تدبر القرآن", "قيام الليل")
+                }
+                val activeSection = when (mainTab) {
+                    "الصلاة", "الإحصائيات" -> "الرئيسية"
+                    "القضاء" -> "المتابعة"
+                    "الإعدادات" -> "الإعدادات"
+                    else -> "التعلّم"
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        primarySections.forEach { section ->
+                            FilterChip(
+                                selected = activeSection == section,
+                                onClick = {
+                                    mainTab = when (section) {
+                                        "الرئيسية" -> "الصلاة"
+                                        "المتابعة" -> "القضاء"
+                                        "التعلّم" -> "الأذكار"
+                                        else -> "الإعدادات"
+                                    }
+                                },
+                                label = { Text(section) }
+                            )
+                        }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        sectionTabs.forEach { tab ->
+                            FilterChip(selected = mainTab == tab, onClick = { mainTab = tab }, label = { Text(tab) })
+                        }
                     }
                 }
             }
