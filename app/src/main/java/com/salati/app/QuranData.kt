@@ -130,7 +130,6 @@ fun QuranReaderSection(
     var selectedAyah by remember { mutableIntStateOf(prefs.getString("quran_ayah", "1")?.toIntOrNull() ?: 1) }
     var search by remember { mutableStateOf("") }
     var menuExpanded by remember { mutableStateOf(false) }
-    var readingStarted by remember { mutableStateOf(prefs.getBoolean("qiyam_reading_started", false)) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -224,7 +223,7 @@ fun QuranReaderSection(
                             }
                             if (onSessionStart != null) {
                                 OutlinedButton(onClick = { onSessionStart(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) {
-                                    Text("بدء القراءة من الآية الحالية")
+                                    Text("ابدأ القراءة")
                                 }
                             }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -254,7 +253,7 @@ fun QuranReaderSection(
                                 }
                             }
                             Text("عند التوقف عن القراءة، اضغط على «تحديد موضع التوقف».", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
-                            OutlinedButton(onClick = { onPositionSelected(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) { Text("التوقف للركوع وحفظ الموضع") }
+                            OutlinedButton(onClick = { onPositionSelected(current.number, current.name, selectedAyah) }, modifier = Modifier.fillMaxWidth()) { Text("التوقف للركوع") }
                         }
                     } else {
                         Text("اضغط على أي آية لتثبيت موضع القراءة الحالي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
