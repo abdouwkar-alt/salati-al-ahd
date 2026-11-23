@@ -56,7 +56,7 @@ jobs:
           APK="app/build/outputs/apk/release/app-release.apk"
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
           test -n "$APKSIGNER"
-          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee app-release-signature.txt
           sha256sum "$APK" > app-release.sha256
       - name: Upload release build artifact
         uses: actions/upload-artifact@v4
@@ -65,6 +65,7 @@ jobs:
           path: |
             app/build/outputs/apk/release/app-release.apk
             app-release.sha256
+            app-release-signature.txt
             app/build/reports/dependency-license/
           retention-days: 90
       - name: Publish GitHub Release
