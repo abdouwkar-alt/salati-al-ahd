@@ -342,9 +342,9 @@ fun SectionNavigation(
     onSelect: (label: String, destination: String) -> Unit
 ) {
     val options = when (section) {
-        "الصلاة" -> listOf("الصلاة المفروضة" to "فرض", "النوافل" to "النوافل", "قيام الليل" to "قيام الليل", "القضاء" to "القضاء")
+        "الصلاة" -> listOf("الصلاة المفروضة" to "الصلاة", "النوافل" to "النوافل", "قيام الليل" to "قيام الليل", "القضاء" to "القضاء")
         "النوافل" -> listOf("تسجيل النوافل" to "النوافل", "سنة الفجر" to "نافلة_الفجر", "سنة الظهر" to "نافلة_الظهر", "سنة العصر" to "نافلة_العصر", "سنة المغرب" to "نافلة_المغرب", "سنة العشاء" to "نافلة_العشاء", "صلاة الضحى" to "نافلة_الضحى")
-        "قيام الليل" -> listOf("سنن قيام الليل" to "قيام_السنن", "جلسة قيام الليل" to "قيام_الجلسة", "سجل قيام الليل" to "قيام_السجل")
+        "قيام الليل" -> listOf("سنن وشروط قيام الليل" to "قيام_السنن", "فضل قيام الليل" to "قيام_الفضل", "جلسة قيام الليل" to "قيام_الجلسة", "سجل قيام الليل" to "قيام_السجل")
         "فرض" -> listOf("تسجيل الصلاة" to "الصلاة", "سنة الفجر" to "فرض_الفجر", "سنة الظهر" to "فرض_الظهر", "سنة العصر" to "فرض_العصر", "سنة المغرب" to "فرض_المغرب", "سنة العشاء" to "فرض_العشاء")
         "القضاء" -> listOf("الحاسبة" to "القضاء_الحاسبة", "القضاء والمتابعة" to "القضاء")
         "الصوم" -> listOf("الصيام" to "الصوم", "قضاء الصيام" to "القضاء")
@@ -373,7 +373,7 @@ fun SectionNavigation(
             options.chunked(2).forEach { rowOptions ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     rowOptions.forEach { (label, destination) ->
-                        val active = selected == label || (selected.isBlank() && options.firstOrNull()?.first == label)
+                        val active = selected == label || (selected == "تسجيل الصلاة" && label == "الصلاة المفروضة") || (selected.isBlank() && options.firstOrNull()?.first == label)
                         Surface(
                             modifier = Modifier.weight(1f).heightIn(min = 64.dp).clickable { onSelect(label, destination) },
                             color = if (active) ShellGreen else Color(0xFFEAE5D9),
@@ -387,6 +387,18 @@ fun SectionNavigation(
                     }
                     if (rowOptions.size == 1) Spacer(Modifier.weight(1f))
                 }
+            }
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = selected == "تسجيل الصلاة",
+                    onClick = { onSelect("تسجيل الصلاة", "الصلاة") },
+                    label = { Text("تسجيل الصلاة") }
+                )
+                FilterChip(
+                    selected = selected == "السنن والأذكار",
+                    onClick = { onSelect("السنن والأذكار", "السنن_الصلوات") },
+                    label = { Text("السنن والأذكار") }
+                )
             }
         }
     } else {
