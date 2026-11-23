@@ -311,6 +311,7 @@ fun QuranReaderSection(
         Dialog(onDismissRequest = {
             prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
             readerOpen = false
+            onSessionFinish?.invoke()
         }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             Surface(Modifier.fillMaxSize(), color = pageBackground) {
                 Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
