@@ -47,10 +47,18 @@ private val PrayerNames = listOf("الفجر", "الظهر", "العصر", "ال
 private val PrayerStatuses = listOf("لم أسجل بعد", "في الوقت جماعة", "في الوقت منفردًا", "في البيت منفردًا", "قضاء منفردًا", "قضاء جماعة", "بعد الوقت", "لم أصلِّ")
 
 class MainActivity : ComponentActivity() {
-    private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { getLocationAndSchedule(); PrayerNotifications.scheduleGazaReminder(this) }
+    private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        getLocationAndSchedule()
+        PrayerNotifications.scheduleGazaReminder(this)
+        requestNotificationPermission()
+    }
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) AppUpdateWorker.schedule(this)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PrayerNotifications.createChannel(this)
+        AppUpdateWorker.schedule(this)
         setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }) }
         if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false)) requestLocationPermissions()
     }
@@ -61,6 +69,18 @@ class MainActivity : ComponentActivity() {
         } else {
             getLocationAndSchedule()
             PrayerNotifications.scheduleGazaReminder(this)
+            requestNotificationPermission()
+        }
+    }
+    private fun requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            val prefs = getSharedPreferences("salati", MODE_PRIVATE)
+            if (!prefs.getBoolean("update_notification_permission_asked", false)) {
+                prefs.edit().putBoolean("update_notification_permission_asked", true).apply()
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
     override fun onResume() {

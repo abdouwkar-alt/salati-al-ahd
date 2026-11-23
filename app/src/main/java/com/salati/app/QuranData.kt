@@ -122,38 +122,6 @@ private object QuranTextRepository {
 }
 
 
-private object QuranMeaningRepository {
-    private const val ENDPOINT = "https://quranenc.com/api/v1/translation/aya/arabic_moyassar"
-    fun load(context: Context, surah: Int, ayah: Int): String {
-        val prefs = context.getSharedPreferences("salati", Context.MODE_PRIVATE)
-        val key = "quran_meaning_arabic_moyassar_${surah}_${ayah}"
-        prefs.getString(key, null)?.takeIf { it.isNotBlank() }?.let { return it }
-        val connection = (URL("$ENDPOINT/$surah/$ayah").openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 15_000
-            readTimeout = 20_000
-            setRequestProperty("Accept", "application/json")
-            setRequestProperty("User-Agent", "SalatiAndroid/1.2")
-        }
-        try {
-            val status = connection.responseCode
-            if (status !in 200..299) throw IOException("تعذر تحميل معنى الآية من المصدر.")
-            val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-            val root = JSONObject(body)
-            val result = root.optJSONObject("result") ?: throw IOException("لم يُرجع مصدر المعاني نتيجة صالحة.")
-            val returnedSurah = result.optString("sura").toIntOrNull()
-            val returnedAyah = result.optString("aya").toIntOrNull()
-            if (returnedSurah != surah || returnedAyah != ayah) throw IOException("رقم الآية في مصدر المعاني لا يطابق موضع القراءة.")
-            val meaning = result.optString("translation").trim()
-            if (meaning.isBlank()) throw IOException("لا يتوفر معنى لهذه الآية حاليًا.")
-            prefs.edit().putString(key, meaning).apply()
-            return meaning
-        } finally {
-            connection.disconnect()
-        }
-    }
-}
-
 @Composable
 fun QuranReaderSection(
     prefs: android.content.SharedPreferences,
@@ -174,12 +142,7 @@ fun QuranReaderSection(
     val scope = rememberCoroutineScope()
     var readerOpen by remember { mutableStateOf(false) }
     var readingTheme by remember { mutableStateOf(prefs.getString("qiyam_reader_theme", "dark") ?: "dark") }
-    var dragDistance by remember { mutableFloatStateOf(0f) }
     var readAyahKeys by remember { mutableStateOf(prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.toSet() ?: emptySet()) }
-    var meaningVisible by remember { mutableStateOf(false) }
-    var meaningText by remember { mutableStateOf("") }
-    var meaningLoading by remember { mutableStateOf(false) }
-    var meaningError by remember { mutableStateOf<String?>(null) }
 
     fun load(force: Boolean = false) {
         scope.launch {
@@ -204,6 +167,7 @@ fun QuranReaderSection(
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(if (verseByVerse) "مصحف قيام الليل" else "مصحف القرآن الكريم", style = MaterialTheme.typography.titleLarge, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold)
             Text("فهرس السور والآيات بالنص العثماني. اضغط على الآية لتسجيل موضع قراءتك.")
+            Text("مصدر النص العثماني: AlQuran Cloud — Islamic Network.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF56715F))
             if (loading) {
                 LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFF164B3A))
                 Text("يُحمّل النص أو يُقرأ من النسخة المحفوظة على هذا الجهاز…")
@@ -332,23 +296,6 @@ fun QuranReaderSection(
                 }) { Text("شروط خدمة AlQuran Cloud") }
             }
         }
-    LaunchedEffect(selectedNumber, selectedAyah, readerOpen, meaningVisible) {
-        if (readerOpen && meaningVisible) {
-            meaningLoading = true
-            meaningError = null
-            meaningText = ""
-            try {
-                meaningText = withContext(Dispatchers.IO) {
-                    QuranMeaningRepository.load(context, selectedNumber, selectedAyah)
-                }
-            } catch (_: Exception) {
-                meaningError = "تعذر تحميل المعنى الآن. تحقق من الاتصال وحاول مرة أخرى."
-            } finally {
-                meaningLoading = false
-            }
-        }
-    }
-
     if (verseByVerse && readerOpen) {
         val activeSurah = surahs.firstOrNull { it.number == selectedNumber }
         val activeAyah = activeSurah?.ayahs?.getOrNull(selectedAyah - 1)
@@ -362,7 +309,6 @@ fun QuranReaderSection(
         Dialog(onDismissRequest = {
             prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
             readerOpen = false
-            meaningVisible = false
             onSessionFinish?.invoke()
         }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             Surface(Modifier.fillMaxSize(), color = pageBackground) {
@@ -370,57 +316,45 @@ fun QuranReaderSection(
                     Text("مصحف قيام الليل", color = pageForeground, style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.CenterHorizontally))
                     Box(
                         Modifier.weight(1f).fillMaxWidth().pointerInput(selectedNumber, selectedAyah, surahs) {
+                            var totalDrag = 0f
                             detectHorizontalDragGestures(
-                                onHorizontalDrag = { _, amount -> dragDistance += amount },
+                                onDragStart = { totalDrag = 0f },
+                                onHorizontalDrag = { _, amount -> totalDrag += amount },
                                 onDragEnd = {
-                                    if (dragDistance < -55f) {
+                                    // A physical right swipe advances to the next ayah in RTL reading.
+                                    if (totalDrag > 55f) {
                                         if (activeSurah != null && selectedAyah < activeSurah.ayahs.size) selectedAyah++
                                         else if (selectedNumber < 114) { selectedNumber++; selectedAyah = 1 }
-                                    } else if (dragDistance > 55f) {
+                                    } else if (totalDrag < -55f) {
                                         if (selectedAyah > 1) selectedAyah--
                                         else if (selectedNumber > 1) { selectedNumber--; selectedAyah = surahs.firstOrNull { it.number == selectedNumber }?.ayahs?.size ?: 1 }
                                     }
-                                    dragDistance = 0f
+                                    totalDrag = 0f
                                     val name = surahs.firstOrNull { it.number == selectedNumber }?.name.orEmpty()
                                     readAyahKeys = readAyahKeys + "${selectedNumber}:${selectedAyah}"
                                     prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", name).putString("quran_ayah", selectedAyah.toString()).putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
                                     onPositionSelected(selectedNumber, name, selectedAyah)
-                                }
+                                },
+                                onDragCancel = { totalDrag = 0f }
                             )
                         },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (activeAyah != null && activeSurah != null) {
+                        if (activeAyah != null) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(18.dp),
                                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(vertical = 18.dp)
                             ) {
-                                Text(activeSurah.name, color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                Text(activeSurah?.name.orEmpty(), color = accent, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                                 Text(activeAyah.text, color = pageForeground, textAlign = TextAlign.Center, style = MaterialTheme.typography.headlineLarge, lineHeight = MaterialTheme.typography.headlineLarge.lineHeight)
-                                TextButton(onClick = { meaningVisible = !meaningVisible }) {
-                                    Text(if (meaningVisible) "إخفاء معنى الآية" else "معنى الآية")
-                                }
-                                if (meaningVisible) {
-                                    Card(colors = CardDefaults.cardColors(containerColor = if (readingTheme == "light") Color(0xFFE5EBDD) else Color(0xFF29463D))) {
-                                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Text("التفسير الميسّر", color = if (readingTheme == "light") Color(0xFF164B3A) else Color(0xFFE8D9B8), fontWeight = FontWeight.Bold)
-                                            when {
-                                                meaningLoading -> CircularProgressIndicator(color = accent, modifier = Modifier.size(24.dp))
-                                                meaningError != null -> Text(meaningError!!, color = pageForeground)
-                                                meaningText.isNotBlank() -> Text(meaningText, color = if (readingTheme == "light") Color(0xFF202020) else pageForeground, textAlign = TextAlign.Start)
-                                            }
-                                            Text("المصدر: التفسير الميسّر — موسوعة القرآن الكريم (QuranEnc.com). المعنى شرح بشري للآية وليس نصّ القرآن.", color = if (readingTheme == "light") Color(0xFF666666) else Color.LightGray, style = MaterialTheme.typography.bodySmall)
-                                        }
-                                    }
-                                }
+
                             }
                         }
                     }
                     Button(onClick = {
                         prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
                         readerOpen = false
-                        meaningVisible = false
                         onSessionFinish?.invoke()
                     }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = Color.Black)) {
                         Text("إغلاق المصحف")

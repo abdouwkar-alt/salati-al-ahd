@@ -1,7 +1,9 @@
-name: Android APK
+name: Android CI
 on:
   push:
-    branches: [ main, salati-app ]
+    branches: [ main, "release/**" ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,11 +19,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+      - name: Generate third-party license report
+        run: gradle :app:generateLicenseReport --no-parallel
+      - name: Run Android lint
+        run: gradle lintDebug
       - name: Build debug APK
         run: gradle assembleDebug
-      - name: Upload APK
+      - name: Build unsigned release variant for compile validation
+        run: gradle assembleRelease
+      - name: Upload test APK and license report
         uses: actions/upload-artifact@v4
         with:
-          name: salati-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: salati-ci-reports
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/reports/dependency-license/
           retention-days: 14

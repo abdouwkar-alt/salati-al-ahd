@@ -62,6 +62,10 @@ Do not install APKs from unofficial mirrors. For each release, use the APK attac
 
 Report security issues privately to the repository owner rather than publishing exploit details in an issue.
 
+## Privacy
+
+Read the [Privacy Notice](PRIVACY.md) for details about local data storage, location permission, network services, notifications, backups, and update behavior.
+
 ## License
 
 The project source code is licensed under the MIT License. This license applies to original project code only; third-party libraries, Quran text/data, API services, and other assets remain subject to their own terms and licenses. See [LICENSE](LICENSE).
