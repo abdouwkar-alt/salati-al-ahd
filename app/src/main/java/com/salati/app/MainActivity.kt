@@ -1034,7 +1034,6 @@ private fun QuranReflectionScreen(prefs: android.content.SharedPreferences, cont
                 prefs.edit().putInt("quran_surah_number", surahNumber)
                     .putString("quran_surah", surahName)
                     .putString("quran_ayah", ayahNumber.toString()).apply()
-            }
             })
         } else {
         Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
