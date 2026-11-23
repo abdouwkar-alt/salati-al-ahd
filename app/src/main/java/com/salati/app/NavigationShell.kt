@@ -12,19 +12,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.StrokeCap
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
 private val ShellGreen = Color(0xFF164B3A)
 private val ShellCream = Color(0xFFF6F2E9)
@@ -73,11 +68,11 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
     )
     val prayerX = .5f
     val prayerY = .88f
-    var selected by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    var opened by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+    val selected = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+    val opened = androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(-1) }
     val progress = androidx.compose.runtime.remember { androidx.compose.animation.core.Animatable(0f) }
     val prayerProgress = androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (opened == 8) 1f else 0f,
+        targetValue = if (opened.intValue == 8) 1f else 0f,
         animationSpec = androidx.compose.animation.core.tween(850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "prayerDoor"
     )
@@ -91,9 +86,12 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         "فَاسْتَبِقُوا الْخَيْرَاتِ",
         "وَسَارِعُوا إِلَىٰ مَغْفِرَةٍ مِنْ رَبِّكُمْ"
     )
-    val currentVerse = if (selected < 0) verses[0] else verses[(selected + 1) % verses.size]
+    val currentVerse = if (selected.intValue < 0) verses[0] else verses[(selected.intValue + 1) % verses.size]
     val height = 900.dp
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(height)) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val walkerHalfWidthPx = with(density) { 14.dp.toPx() }
+        val walkerHalfHeightPx = with(density) { 27.dp.toPx() }
         val widthPx = with(androidx.compose.ui.platform.LocalDensity.current) { maxWidth.toPx() }
         val heightPx = with(androidx.compose.ui.platform.LocalDensity.current) { height.toPx() }
         val points = buildList {
@@ -104,8 +102,8 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         val route = androidx.compose.runtime.remember(widthPx, heightPx) { buildJourneyRoute(points) }
         val routeLength = route.lastOrNull()?.distance ?: 1f
         val targetDistance = when {
-            selected == 8 -> routeLength
-            selected >= 0 -> route.firstOrNull { it.nodeIndex == selected + 1 }?.distance ?: 0f
+            selected.intValue == 8 -> routeLength
+            selected.intValue >= 0 -> route.firstOrNull { it.nodeIndex == selected.intValue + 1 }?.distance ?: 0f
             else -> 0f
         }
         val targetProgress = (targetDistance / routeLength).coerceIn(0f, 1f)
@@ -125,23 +123,23 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
             style = MaterialTheme.typography.titleMedium
         )
         doors.forEachIndexed { index, door ->
-            val doorOpen = opened == index
+            val doorOpen = opened.intValue == index
             val width = maxWidth * .22f
             Column(
                 modifier = Modifier.offset(
                     x = maxWidth * door.x - width / 2,
                     y = height * door.y - 62.dp
                 ).width(width).clickable {
-                    selected = index
-                    opened = -1
+                    selected.intValue = index
+                    opened.intValue = -1
                 },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(door.title, color = ShellGreen, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 1, style = MaterialTheme.typography.labelLarge)
                 JourneyDoorGraphic(open = doorOpen, onOpen = {
-                    selected = index
-                    opened = -1
+                    selected.intValue = index
+                    opened.intValue = -1
                 })
             }
         }
@@ -152,12 +150,12 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
         ) {
             Text("الصلاة جامعة", color = ShellGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             PrayerDoorGraphic(openProgress = prayerProgress.value, onOpen = {
-                selected = 8
-                opened = 8
+                selected.intValue = 8
+                opened.intValue = 8
             })
             Text("عماد الدين", color = ShellGreen.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
         }
-        if (selected >= 0) {
+        if (selected.intValue >= 0) {
             Text(
                 currentVerse,
                 modifier = Modifier.align(Alignment.TopCenter).offset(y = 48.dp).fillMaxWidth(.82f),
@@ -166,12 +164,12 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
             )
         }
         val walkerPoint = routePointAt(route, routeLength * progress.value)
-        if (selected >= 0) {
+        if (selected.intValue >= 0) {
             androidx.compose.foundation.Canvas(
                 Modifier.offset {
                     androidx.compose.ui.unit.IntOffset(
-                        (walkerPoint.x - with(androidx.compose.ui.platform.LocalDensity.current) { 14.dp.toPx() }).roundToInt(),
-                        (walkerPoint.y - with(androidx.compose.ui.platform.LocalDensity.current) { 27.dp.toPx() }).roundToInt()
+                        (walkerPoint.x - walkerHalfWidthPx).roundToInt(),
+                        (walkerPoint.y - walkerHalfHeightPx).roundToInt()
                     )
                 }.size(28.dp, 54.dp)
             ) {
@@ -197,21 +195,21 @@ private fun JourneyHome(onOpen: (String, String, String) -> Unit) {
                 drawLine(c, androidx.compose.ui.geometry.Offset(size.width * .57f, 33.dp.toPx()), androidx.compose.ui.geometry.Offset(size.width * .72f, 49.dp.toPx()), 4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
             }
         }
-        androidx.compose.runtime.LaunchedEffect(selected, targetProgress) {
-            if (selected >= 0) {
+        androidx.compose.runtime.LaunchedEffect(selected.intValue, targetProgress) {
+            if (selected.intValue >= 0) {
                 progress.snapTo(0f)
                 progress.animateTo(
                     targetProgress,
                     animationSpec = androidx.compose.animation.core.tween(
-                        durationMillis = (2600 + (selected + 1) * 1050).coerceAtMost(11200),
+                        durationMillis = (2600 + (selected.intValue + 1) * 1050).coerceAtMost(11200),
                         easing = androidx.compose.animation.core.LinearEasing
                     )
                 )
-                opened = selected
-                val door = if (selected == 8) null else doors[selected]
+                opened.intValue = selected.intValue
+                val door = if (selected.intValue == 8) null else doors[selected.intValue]
                 if (door != null) onOpen(door.section, door.destination, "")
                 else onOpen("الصلاة", "الصلاة", "")
-                selected = -1
+                selected.intValue = -1
             }
         }
     }
@@ -262,12 +260,12 @@ private fun routePointAt(route: List<JourneySample>, distance: Float): androidx.
 
 @Composable
 private fun JourneyDoorGraphic(open: Boolean, onOpen: () -> Unit) {
-    val angle by androidx.compose.animation.core.animateFloatAsState(
+    val angleState = androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (open) 68f else 0f,
         animationSpec = androidx.compose.animation.core.tween(850, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "doorLeaves"
     )
-    JourneyDoorGraphic(openProgress = angle / 68f, onOpen = onOpen)
+    JourneyDoorGraphic(openProgress = angleState.value / 68f, onOpen = onOpen)
 }
 
 @Composable
