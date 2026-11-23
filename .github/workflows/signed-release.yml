@@ -65,7 +65,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.0
+          tag_name: v1.3.1
           target_commitish: main
           generate_release_notes: true
           files: |
