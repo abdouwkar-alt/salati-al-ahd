@@ -253,7 +253,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 }
             }
         ) {
-        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp), userScrollEnabled = mainTab != "الرئيسية") {
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = Green)) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
