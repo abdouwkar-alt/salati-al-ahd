@@ -105,11 +105,54 @@ private class JvDoorSpec(
 fun HomeDashboardV2(
     dateText: String,
     onOpen: (section: String, destination: String, subTab: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    nextPrayerName: String = "",
+    nextPrayerTime: String = "",
+    nextPrayerCountdown: String = ""
 ) {
-    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
         JvHeader(dateText)
+        if (nextPrayerName.isNotBlank()) {
+            JvPrayerFocus(
+                prayerName = nextPrayerName,
+                prayerTime = nextPrayerTime,
+                countdown = nextPrayerCountdown,
+                onOpenPrayer = { onOpen("الصلاة", "الصلاة", "تسجيل الصلاة") }
+            )
+        }
         JvJourney(onOpen, Modifier.weight(1f).fillMaxWidth())
+    }
+}
+
+@Composable
+private fun JvPrayerFocus(
+    prayerName: String,
+    prayerTime: String,
+    countdown: String,
+    onOpenPrayer: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenPrayer),
+        shape = RoundedCornerShape(18.dp),
+        color = Color(0xFFE9E4D8),
+        border = androidx.compose.foundation.BorderStroke(1.dp, JvGold.copy(alpha = .55f))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("الصلاة القادمة", color = JvGreen, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text(prayerName, color = JvDeep, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(prayerTime, color = JvGreen, style = MaterialTheme.typography.bodySmall)
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("متبقي على الأذان", color = Color(0xFF756A55), style = MaterialTheme.typography.labelSmall)
+                Text(countdown, color = JvDeep, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("افتح متابعة الصلاة", color = JvGreen, style = MaterialTheme.typography.labelSmall)
+            }
+        }
     }
 }
 
