@@ -108,7 +108,8 @@ fun HomeDashboardV2(
     modifier: Modifier = Modifier,
     nextPrayerName: String = "",
     nextPrayerTime: String = "",
-    nextPrayerCountdown: String = ""
+    nextPrayerCountdown: String = "",
+    todayPrayerTimes: List<Pair<String, String>> = emptyList()
 ) {
     Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
         JvHeader(
@@ -125,7 +126,55 @@ fun HomeDashboardV2(
                 onOpenPrayer = { onOpen("الصلاة", "الصلاة", "تسجيل الصلاة") }
             )
         }
+        if (todayPrayerTimes.isNotEmpty()) {
+            JvPrayerTimesStrip(times = todayPrayerTimes, nextPrayerName = nextPrayerName)
+        }
         JvJourney(onOpen, Modifier.weight(1f).fillMaxWidth())
+    }
+}
+
+@Composable
+private fun JvPrayerTimesStrip(
+    times: List<Pair<String, String>>,
+    nextPrayerName: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color(0xFFF1EEE5),
+        shape = RoundedCornerShape(14.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDCD4C2))
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            times.forEach { (name, time) ->
+                val isNext = name == nextPrayerName
+                Column(
+                    modifier = Modifier.weight(1f).semantics {
+                        contentDescription = name + "، " + time + if (isNext) "، الصلاة القادمة" else ""
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Text(
+                        name,
+                        color = if (isNext) JvGreen else Color(0xFF756A55),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isNext) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1
+                    )
+                    Text(
+                        time,
+                        color = JvDeep,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isNext) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -260,7 +309,7 @@ private fun JvJourney(onOpen: (String, String, String) -> Unit, modifier: Modifi
     val doors = remember {
         listOf(
             JvDoorSpec("وعي", "وعي", "وعي", .76f, .31f, Icons.Filled.School),
-            JvDoorSpec("الخير والناس", "الإنفاق", "الإنفاق", .24f, .47f, Icons.Filled.VolunteerActivism),
+            JvDoorSpec("الخير والناس", "الخير والناس", "الخير_والناس", .24f, .47f, Icons.Filled.VolunteerActivism),
             JvDoorSpec("القرآن", "تدبر القرآن", "تدبر القرآن", .76f, .63f, Icons.Filled.MenuBook),
             JvDoorSpec("روتين اليوم", "روتين يومك", "روتين_اليوم", .24f, .79f, Icons.Filled.AutoAwesome)
         )
