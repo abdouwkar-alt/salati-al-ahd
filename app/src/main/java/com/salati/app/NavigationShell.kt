@@ -477,16 +477,49 @@ fun SectionPlaceholder(title: String, subtitle: String, detail: String) {
 
 @Composable
 fun BottomNavigationBar(selected: String, onSelect: (String) -> Unit) {
-    Surface(color = ShellGreen, shape = RoundedCornerShape(18.dp)) {
-        Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("الإعدادات", "الإحصائيات", "البداية").forEach { item ->
-                val active = selected == item
+    val destinations = listOf(
+        "الخير والناس" to "خير",
+        "العبادة" to "عبادة",
+        "وعي" to "وعي",
+        "الرئيسية" to "الرئيسية"
+    )
+    Surface(color = ShellGreen, shape = RoundedCornerShape(20.dp), shadowElevation = 5.dp) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            destinations.forEach { (destination, label) ->
+                val active = selected == destination
                 Surface(
-                    modifier = Modifier.weight(1f).clickable { onSelect(item) },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).clickable { onSelect(destination) },
                     color = if (active) ShellCream else ShellGreen,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text(item, modifier = Modifier.padding(vertical = 13.dp, horizontal = 4.dp), textAlign = TextAlign.Center, color = if (active) ShellGreen else Color.White, fontWeight = FontWeight.SemiBold)
+                    Column(
+                        Modifier.fillMaxWidth().padding(vertical = 7.dp, horizontal = 2.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            when (destination) {
+                                "الرئيسية" -> "⌂"
+                                "وعي" -> "◈"
+                                "العبادة" -> "۞"
+                                else -> "♡"
+                            },
+                            color = if (active) ShellGreen else Color.White.copy(alpha = .82f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            label,
+                            textAlign = TextAlign.Center,
+                            color = if (active) ShellGreen else Color.White,
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
