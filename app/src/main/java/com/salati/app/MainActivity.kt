@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
         AppUpdateWorker.schedule(this)
         getSharedPreferences("salati", MODE_PRIVATE).edit().putLong("app_session_started_at", 0L).apply()
         setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }, initialRoute = when { intent?.getBooleanExtra("open_daily_routine", false) == true -> "روتين_اليوم"; intent?.getBooleanExtra("open_awareness", false) == true -> "وعي"; else -> null }) }
-        if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false)) requestLocationPermissions()
+        if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false) && getSharedPreferences("salati", MODE_PRIVATE).getBoolean("experience_v2_onboarding_done", false)) requestLocationPermissions()
     }
     private fun requestLocationPermissions() {
         val needed = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
