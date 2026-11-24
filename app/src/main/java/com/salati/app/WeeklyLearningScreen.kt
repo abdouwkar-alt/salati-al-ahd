@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalUriHandler
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -25,6 +26,7 @@ private data class WeeklyLesson(
     val text: String,
     val attribution: String,
     val source: String,
+    val sourceUrl: String,
     val explanation: String,
     val guardrail: String,
     val action: String,
@@ -40,6 +42,7 @@ private val weeklyLessons = listOf(
         text = "«إن الدين يسر، ولن يشاد الدين أحد إلا غلبه، فسددوا وقاربوا وأبشروا»",
         attribution = "أبو هريرة رضي الله عنه",
         source = "صحيح البخاري (39)، وصحيح مسلم (2816) بمعناه",
+        sourceUrl = "https://dorar.net/hadith/sharh/1476",
         explanation = "الدين قائم على اليسر، والنبي ﷺ وجّه إلى الاستقامة والمقاربة وترك التكلف الذي يفضي إلى الانقطاع.",
         guardrail = "اليسر لا يعني إسقاط الفرائض أو استباحة المحرمات؛ بل يكون في حدود الشرع والاستطاعة.",
         action = "اختر عملًا صالحًا صغيرًا تستطيع المداومة عليه دون أن يزاحم واجبًا.",
@@ -53,6 +56,7 @@ private val weeklyLessons = listOf(
         text = "«يسروا ولا تعسروا، وبشروا ولا تنفروا»",
         attribution = "أنس بن مالك رضي الله عنه",
         source = "صحيح البخاري (69)، وصحيح مسلم (1734)",
+        sourceUrl = "https://dorar.net/h/pUdg3tMv",
         explanation = "يوجه الحديث إلى الرفق والتيسير والتبشير، والابتعاد عن الأسلوب الذي ينفّر الناس.",
         guardrail = "التيسير في الأسلوب لا يبيح تغيير حكم شرعي أو إخفاء الحقيقة.",
         action = "اختر موقفًا واحدًا هذا الأسبوع تتعامل فيه برفق وتشجيع.",
@@ -66,6 +70,7 @@ private val weeklyLessons = listOf(
         text = "«أحب الأعمال إلى الله تعالى أدومها وإن قل»",
         attribution = "عائشة أم المؤمنين رضي الله عنها",
         source = "صحيح مسلم (783)، وصحيح البخاري (6465) بلفظ أطول",
+        sourceUrl = "https://dorar.net/h/NpZLQ79z",
         explanation = "يبين الحديث فضل العمل المشروع الذي يثبت عليه صاحبه، ولو كان قليلًا.",
         guardrail = "لا يعني ذلك أن القليل يغني عن الفرائض أو أن مقدار العمل هو معيار قبول الله.",
         action = "اختر عادة نافلة أو درسًا قصيرًا يناسب قدرتك، وعدّل حجمه عند الحاجة.",
@@ -79,6 +84,7 @@ private val weeklyLessons = listOf(
         text = "«إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى»",
         attribution = "عمر بن الخطاب رضي الله عنه",
         source = "صحيح البخاري (1)، وصحيح مسلم (1907)",
+        sourceUrl = "https://diwanalsunnah.com/ar/hadith/bukhari/1",
         explanation = "للنية أثر عظيم في العمل، وبها يتميز المقصود من الفعل.",
         guardrail = "النية الحسنة لا تجعل العمل المحرم مشروعًا، ولا تغني عن صحة العمل.",
         action = "قبل عمل صالح أو مباح، خذ لحظة لاستحضار نيتك.",
@@ -92,6 +98,7 @@ private val weeklyLessons = listOf(
         text = "«كان النبي ﷺ يتخولنا بالموعظة في الأيام كراهة السآمة علينا»",
         attribution = "عبد الله بن مسعود رضي الله عنه",
         source = "صحيح البخاري (68)، وصحيح مسلم (2821) باختلاف يسير",
+        sourceUrl = "https://dorar.net/hadith/sharh/77",
         explanation = "كان النبي ﷺ يراعي حال أصحابه، وينوّع أوقات الموعظة حتى لا يملّوا.",
         guardrail = "هذا توجيه في مراعاة المتعلم، وليس تحديدًا لعدد الدروس أو وجوب جدول أسبوعي.",
         action = "اجعل جلسة التعلم قصيرة وفي وقت مناسب لك، وافتح التفصيل عندما تكون مستعدًا.",
@@ -105,6 +112,7 @@ private val weeklyLessons = listOf(
         text = "«كان الرجل منا إذا تعلم عشر آيات لم يجاوزهن حتى يعرف معانيهن والعمل بهن»",
         attribution = "أثر عن عبد الله بن مسعود رضي الله عنه",
         source = "تفسير الطبري (1/44)، وورد الحكم عليه بالصحة في الموسوعة الحديثية",
+        sourceUrl = "https://dorar.net/hadith/sharh/210301",
         explanation = "ينقل الأثر طريقة في التدرج: معرفة المعنى وربط التعلم بالعمل قبل الانتقال إلى مزيد من المادة.",
         guardrail = "هذا أثر موقوف على ابن مسعود، وليس حديثًا نبويًا. والعدد المذكور ليس حدًا ملزمًا لكل متعلم.",
         action = "اختر آية، وافهم معناها من تفسير موثوق، ثم فكر في عمل مشروع يرتبط بها.",
@@ -118,6 +126,7 @@ private val weeklyLessons = listOf(
         text = "«كان رسول الله ﷺ يعلمنا الاستخارة في الأمور كلها كما يعلمنا السورة من القرآن»",
         attribution = "جابر بن عبد الله رضي الله عنهما",
         source = "صحيح البخاري (1162)",
+        sourceUrl = "https://dorar.net/h/9zmy5g6X",
         explanation = "يدل الحديث على عناية النبي ﷺ بتعليم الاستخارة، ودعاء الله أن يقدر الخير ويصرف الشر.",
         guardrail = "الاستخارة ليست تنبؤًا بالغيب، ولا يشترط بعدها أن يرى الإنسان حلمًا. ولا يغني ذلك عن التفكير والاستشارة.",
         action = "تعلّم دعاء الاستخارة، وارجع إليه عندما تهمّ بأمر يحتاج إلى استخارة.",
@@ -131,6 +140,7 @@ private val weeklyLessons = listOf(
         text = "الخلاف الفقهي المعتبر في بعض الفروع قد يكون سعة، لكن ليس كل قول منقول خلافًا معتبرًا.",
         attribution = "مادة تحريرية تعليمية تحتاج مراجعة فقهية",
         source = "دار الإفتاء المصرية: الاختلاف بين المذاهب الفقهية؛ ومجمع الفقه الإسلامي الدولي",
+        sourceUrl = "https://www.dar-alifta.org/ar/fatwa/details/16860/الاختلاف-بين-المذاهب-الفقهية",
         explanation = "نتعلم احترام المذاهب وعرض أقوالها بأمانة، مع معرفة محل الاتفاق ومحل الاجتهاد.",
         guardrail = "عبارة «اختلاف أمتي رحمة» لا تُعرض على أنها حديث ثابت عن النبي ﷺ، ولا تُسوّغ الأقوال الشاذة.",
         action = "عند سماع مسألة خلافية، اسأل: ما مصدر القول؟ وهل الخلاف فيها معتبر؟",
@@ -141,6 +151,7 @@ private val weeklyLessons = listOf(
 
 @Composable
 fun WeeklyLearningScreen(prefs: SharedPreferences) {
+    val uriHandler = LocalUriHandler.current
     val today = LocalDate.now()
     val startDate = remember {
         prefs.getString("weekly_learning_started_on", null) ?: today.toString().also {
@@ -201,6 +212,9 @@ fun WeeklyLearningScreen(prefs: SharedPreferences) {
                 HorizontalDivider(color = LearningPale)
                 Text("المصدر", color = LearningGreen, fontWeight = FontWeight.Bold)
                 Text(lesson.source, style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = { runCatching { uriHandler.openUri(lesson.sourceUrl) } }) {
+                    Text("افتح المصدر للتحقق")
+                }
                 HorizontalDivider(color = LearningPale)
                 Text("المعنى", color = LearningGreen, fontWeight = FontWeight.Bold)
                 Text(lesson.explanation)
