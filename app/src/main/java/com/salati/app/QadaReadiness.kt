@@ -50,7 +50,8 @@ object QadaReadiness {
 fun QadaReadinessScreen(
     prefs: SharedPreferences,
     today: LocalDate,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSkip: () -> Unit
 ) {
     val dates = (0L..29L).map { today.minusDays(it) }
     val streak = run {
@@ -112,6 +113,11 @@ fun QadaReadinessScreen(
                 }
             }
         }
+        Button(
+            onClick = onSkip,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = ReadinessGreen)
+        ) { Text("تخطي وبدء القضاء") }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("العودة إلى الصلاة") }
     }
 }

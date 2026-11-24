@@ -17,6 +17,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +62,7 @@ class MainActivity : ComponentActivity() {
         PrayerNotifications.createChannel(this)
         AppUpdateWorker.schedule(this)
         getSharedPreferences("salati", MODE_PRIVATE).edit().putLong("app_session_started_at", 0L).apply()
-        setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }, initialRoute = when { intent?.getBooleanExtra("open_daily_routine", false) == true -> "روتين_اليوم"; intent?.getBooleanExtra("open_awareness", false) == true -> "وعي"; else -> null }) }
+        setContent { CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }, initialRoute = when { intent?.getBooleanExtra("open_daily_routine", false) == true -> "روتين_اليوم"; intent?.getBooleanExtra("open_awareness", false) == true -> "وعي"; else -> null }) } }
         if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false) && getSharedPreferences("salati", MODE_PRIVATE).getBoolean("experience_v2_onboarding_done", false)) requestLocationPermissions()
     }
     private fun requestLocationPermissions() {
@@ -554,7 +556,12 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                     QadaReadinessScreen(
                         prefs = prefs,
                         today = today,
-                        onBack = { mainTab = "الصلاة" }
+                        onBack = { mainTab = "الصلاة" },
+                        onSkip = {
+                            prefs.edit().putBoolean("qada_readiness_unlocked", true).apply()
+                            calculatorView = "القضاء"
+                            mainTab = "القضاء"
+                        }
                     )
                 }
             } else if (mainTab == "القضاء" && calculatorView == "الحاسبة" && !qadaNoticeAccepted) {
