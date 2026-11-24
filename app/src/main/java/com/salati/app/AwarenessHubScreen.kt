@@ -254,7 +254,7 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
                     Card(colors = CardDefaults.cardColors(containerColor = AwarenessCream), modifier = Modifier.fillMaxWidth()) {
                         Column(Modifier.fillMaxWidth().padding(11.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                Text("\${index + 1}. $module", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                                Text("${index + 1}. $module", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
                                 TextButton(onClick = { expandedModule = if (expandedModule == module) "" else module }) {
                                     Text(if (expandedModule == module) "إخفاء" else "افتح")
                                 }
@@ -262,7 +262,7 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
                             if (expandedModule == module) {
                                 Text("هذا عنوان تعلّم. قبل اعتماد درس تفصيلي نثبت نصوصه ومصادره، ونفصل بين القرآن والحديث الصحيح والأثر والتاريخ والتحليل المعاصر.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6B6B62))
                                 TextButton(onClick = {
-                                    val query = URLEncoder.encode("$module \${path.title} درس موثق", "UTF-8")
+                                    val query = URLEncoder.encode("$module ${path.title} درس موثق", "UTF-8")
                                     runCatching { uriHandler.openUri("https://www.youtube.com/results?search_query=$query") }
                                 }) { Text("ابحث عن فيديوهات لهذا الموضوع") }
                             }
