@@ -196,6 +196,14 @@ fun ScreenTimeUsageCard(prefs: android.content.SharedPreferences) {
     var usage by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     var feedback by remember { mutableStateOf("") }
 
+    LaunchedEffect(accessGranted, selectedPackages) {
+        if (accessGranted && selectedPackages.isNotEmpty()) {
+            usage = runCatching { UsageAccess.todayUsage(context, selectedPackages) }.getOrDefault(emptyMap())
+        } else {
+            usage = emptyMap()
+        }
+    }
+
     fun refreshUsage() {
         accessGranted = UsageAccess.isGranted(context)
         installedApps = UsageAccess.installedChoices(context)
