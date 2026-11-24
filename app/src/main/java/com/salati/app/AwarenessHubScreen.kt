@@ -11,6 +11,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
@@ -33,6 +40,100 @@ private val awarenessPaths = listOf(
     AwarenessPath("modern", "فقه الواقع وأسئلة العصر", "كيف نفكر في الشائعات، والخوارزميات، والاستهلاك، والعلاقات، والاختلاف، والذكاء الاصطناعي؟", listOf("التثبت من الأخبار", "الخصوصية والكرامة الرقمية", "إدارة الانتباه والتشتت", "الاختلاف والحوار", "المال والاستهلاك", "العمل والمعنى والمسؤولية"), "فقه الواقع الشباب الإعلام الرقمي التفكير النقدي"),
     AwarenessPath("gaza", "غزة: الخبر والإنسان", "متابعة ما يحدث في غزة من مصادر واضحة، مع الفصل بين الخبر والتقرير الإنساني والتحليل.", listOf("آخر الأخبار", "الوضع الإنساني والإغاثي", "التعليم والصحة والنزوح", "التحقق من الصور والمقاطع", "طرق المساعدة عبر جهات موثوقة"), "غزة تقارير إنسانية وتحليل موثق")
 )
+
+private const val GAZA_DIGEST_WORK = "daily_gaza_news_digest"
+private const val GAZA_DIGEST_CHANNEL = "gaza_news_digest"
+
+private fun setGazaDigest(context: android.content.Context, enabled: Boolean) {
+    val manager = WorkManager.getInstance(context)
+    if (!enabled) {
+        manager.cancelUniqueWork(GAZA_DIGEST_WORK)
+        return
+    }
+    val request = PeriodicWorkRequestBuilder<GazaDigestWorker>(24, java.util.concurrent.TimeUnit.HOURS)
+        .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .build()
+    manager.enqueueUniquePeriodicWork(GAZA_DIGEST_WORK, ExistingPeriodicWorkPolicy.UPDATE, request)
+}
+
+class GazaDigestWorker(context: android.content.Context, params: WorkerParameters) : Worker(context, params) {
+    override fun doWork(): Result {
+        val prefs = applicationContext.getSharedPreferences("salati", android.content.Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("gaza_digest_enabled", false)) return Result.success()
+        return try {
+            val query = URLEncoder.encode("غزة OR قطاع غزة", "UTF-8")
+            val connection = (URL("https://news.google.com/rss/search?q=$query&hl=ar&gl=EG&ceid=EG:ar").openConnection() as HttpURLConnection).apply {
+                connectTimeout = 10_000
+                readTimeout = 12_000
+                setRequestProperty("User-Agent", "SalatiJamea-Android/1.0")
+            }
+            val titles = try {
+                connection.inputStream.use { stream ->
+                    val parser = Xml.newPullParser().apply {
+                        setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
+                        setInput(stream, "UTF-8")
+                    }
+                    val found = mutableListOf<String>()
+                    var event = parser.eventType
+                    var inItem = false
+                    var inTitle = false
+                    var title = ""
+                    while (event != XmlPullParser.END_DOCUMENT && found.size < 3) {
+                        when (event) {
+                            XmlPullParser.START_TAG -> {
+                                if (parser.name == "item") { inItem = true; title = "" }
+                                if (inItem && parser.name == "title") inTitle = true
+                            }
+                            XmlPullParser.TEXT -> if (inItem && inTitle) title += parser.text
+                            XmlPullParser.END_TAG -> {
+                                if (parser.name == "title") inTitle = false
+                                if (parser.name == "item" && inItem) {
+                                    if (title.isNotBlank()) found.add(title.trim())
+                                    inItem = false
+                                }
+                            }
+                        }
+                        event = parser.next()
+                    }
+                    found
+                }
+            } finally { connection.disconnect() }
+            if (titles.isNotEmpty()) {
+                val manager = applicationContext.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                if (android.os.Build.VERSION.SDK_INT >= 26) {
+                    manager.createNotificationChannel(
+                        android.app.NotificationChannel(GAZA_DIGEST_CHANNEL, "موجز أخبار غزة", android.app.NotificationManager.IMPORTANCE_DEFAULT)
+                    )
+                }
+                if (android.os.Build.VERSION.SDK_INT < 33 ||
+                    androidx.core.content.ContextCompat.checkSelfPermission(applicationContext, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) {
+                    val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
+                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        putExtra("open_awareness", true)
+                    }
+                    val pending = android.app.PendingIntent.getActivity(
+                        applicationContext, 7712, intent,
+                        android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                    )
+                    val builder = if (android.os.Build.VERSION.SDK_INT >= 26)
+                        android.app.Notification.Builder(applicationContext, GAZA_DIGEST_CHANNEL)
+                    else android.app.Notification.Builder(applicationContext)
+                    manager.notify(7712, builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentTitle("موجز غزة")
+                        .setContentText(titles.first())
+                        .setStyle(android.app.Notification.BigTextStyle().bigText(titles.joinToString("\\n")))
+                        .setContentIntent(pending)
+                        .setAutoCancel(true)
+                        .build())
+                }
+            }
+            Result.success()
+        } catch (_: Exception) {
+            Result.retry()
+        }
+    }
+}
 
 private data class GazaNewsItem(val title: String, val link: String, val source: String, val published: String)
 
@@ -88,6 +189,7 @@ private suspend fun fetchGazaNews(): List<GazaNewsItem> = withContext(Dispatcher
 @Composable
 fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
     val uriHandler = LocalUriHandler.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selectedPathId by remember { mutableStateOf(prefs.getString("awareness_path_id", "iman") ?: "iman") }
     var expandedModule by remember { mutableStateOf("") }
     var interests by remember { mutableStateOf(prefs.getStringSet("awareness_interests", setOf("iman", "akhlaq", "seerah"))?.toSet().orEmpty()) }
@@ -95,6 +197,7 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
     var loading by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
+    var digestEnabled by remember { mutableStateOf(prefs.getBoolean("gaza_digest_enabled", false)) }
     val path = awarenessPaths.firstOrNull { it.id == selectedPathId } ?: awarenessPaths.first()
 
     LaunchedEffect(loaded) {
@@ -190,6 +293,17 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
                 Text("روابط منشورة من مصادر متعددة يجمعها موجز بحث إخباري. هذا ليس تحققًا مستقلًا من كل خبر؛ افتح المصدر الأصلي وانتبه لتاريخ النشر والتحديث.")
                 Button(onClick = { loaded = false; error = ""; news = emptyList() }, enabled = !loading, colors = ButtonDefaults.buttonColors(containerColor = AwarenessGreen)) {
                     Text(if (loading) "جارٍ التحديث…" else "تحديث الأخبار")
+                }
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Checkbox(checked = digestEnabled, onCheckedChange = { enabled ->
+                        digestEnabled = enabled
+                        prefs.edit().putBoolean("gaza_digest_enabled", enabled).apply()
+                        setGazaDigest(context = androidx.compose.ui.platform.LocalContext.current, enabled = enabled)
+                    })
+                    Column(Modifier.weight(1f)) {
+                        Text("أرسل لي موجز غزة مرة يوميًا")
+                        Text("اختياري، عبر إشعار محلي تقريبي عند توفر الإنترنت.", color = Color(0xFF77736B), style = MaterialTheme.typography.bodySmall)
+                    }
                 }
                 if (error.isNotBlank()) Text(error, color = Color(0xFF8A3C33))
                 news.forEach { item ->
