@@ -315,6 +315,21 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
     } else 0L
     val inAppTime = previousForegroundTime + currentSession
     val lastSession = prefs.getLong("app_last_session_ms", 0L)
+    val challengeOptions = listOf(
+        "أتهيأ للصلاة قبل وقتها",
+        "أحاول إدراك تكبيرة الإحرام في صلاة أختارها",
+        "ورد قصير من القرآن مع فهم المعنى",
+        "أحفظ دعاءً صحيحًا من السنة",
+        "أتواصل مع قريب",
+        "أخصص وقتًا أقل للهاتف قبل النوم",
+        "أشارك في إطعام أو عمل خير"
+    )
+    var selectedChallenge by remember(todayKey) {
+        mutableStateOf(prefs.getString("daily_step_$todayKey", "") ?: "")
+    }
+    var challengeDone by remember(todayKey) {
+        mutableStateOf(prefs.getBoolean("daily_step_done_$todayKey", false))
+    }
 
     fun persistAndSchedule() {
         RoutineReminderStore.save(prefs, reminders)
@@ -349,6 +364,43 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
                 Text("آخر جلسة: ${formatRoutineDuration(lastSession)}", style = MaterialTheme.typography.bodySmall)
                 Text(
                     "هذا يحسب بقاء التطبيق في الواجهة فقط؛ لا يعني أن كل هذه المدة كانت تعلمًا أو عبادة.",
+                    color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        Card(colors = CardDefaults.cardColors(containerColor = RoutineCream)) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("خطوة اليوم", color = RoutineGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("اختر فعلًا واحدًا تود الاهتمام به اليوم، أو اتركه دون اختيار.")
+                challengeOptions.forEach { option ->
+                    FilterChip(
+                        selected = selectedChallenge == option,
+                        onClick = {
+                            selectedChallenge = if (selectedChallenge == option) "" else option
+                            challengeDone = false
+                            prefs.edit()
+                                .putString("daily_step_$todayKey", selectedChallenge)
+                                .putBoolean("daily_step_done_$todayKey", false)
+                                .apply()
+                        },
+                        label = { Text(option) }
+                    )
+                }
+                if (selectedChallenge.isNotBlank()) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Checkbox(
+                            checked = challengeDone,
+                            onCheckedChange = {
+                                challengeDone = it
+                                prefs.edit().putBoolean("daily_step_done_$todayKey", it).apply()
+                            }
+                        )
+                        Text("سجلت أنني قمت بالخطوة التي اخترتها")
+                    }
+                }
+                Text(
+                    "هذا اختيار شخصي قابل للتغيير، وليس واجبًا أو تقييمًا للدين أو قبول العمل.",
                     color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall
                 )
             }
