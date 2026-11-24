@@ -376,13 +376,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             } else if (mainTab == "قيام_إنهاء") {
                 item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
             } else if (mainTab == "الإنفاق") {
-                item {
-                    SectionPlaceholder(
-                        title = "الإنفاق",
-                        subtitle = "الزكاة والصدقة والإنفاق في وجوه الخير",
-                        detail = "هذا القسم مبدئي. سنبني حاسبة الزكاة ومتابعة الصدقات بعد تحديد الضوابط والمصادر الشرعية وطريقة الحساب."
-                    )
-                }
+                item { RemembranceCareScreen(prefs = prefs) }
             } else if (mainTab == "التفكر") {
                 item {
                     SectionPlaceholder(
