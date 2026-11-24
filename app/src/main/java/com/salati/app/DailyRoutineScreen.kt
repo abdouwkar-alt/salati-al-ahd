@@ -296,7 +296,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
     var draftCategory by remember { mutableStateOf("استيقاظ") }
     var draftHour by remember { mutableIntStateOf(7) }
     var draftMinute by remember { mutableIntStateOf(0) }
-    val selectedDays = remember { mutableStateListOf<Int>().apply { addAll(1..7) } }
+    val selectedDays = remember { mutableStateListOf<Int>().apply { addAll((1..7).toList()) } }
     var feedback by remember { mutableStateOf("") }
     var clockNow by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -419,7 +419,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
                     draftHour = 7
                     draftMinute = 0
                     selectedDays.clear()
-                    selectedDays.addAll(1..7)
+                    selectedDays.addAll((1..7).toList())
                     showEditor = true
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = RoutineGreen)
@@ -441,7 +441,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
                         draftHour = when (category) { "استيقاظ" -> 7; "وجبة" -> 14; "نوم" -> 22; else -> 9 }
                         draftMinute = 0
                         selectedDays.clear()
-                        selectedDays.addAll(1..7)
+                        selectedDays.addAll((1..7).toList())
                         showEditor = true
                     },
                     modifier = Modifier.weight(1f),
