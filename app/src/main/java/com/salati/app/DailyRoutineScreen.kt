@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -298,6 +299,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
     var draftMinute by remember { mutableIntStateOf(0) }
     val selectedDays = remember { mutableStateListOf<Int>().apply { addAll((1..7).toList()) } }
     var feedback by remember { mutableStateOf("") }
+    var showAdvancedTools by remember { mutableStateOf(false) }
     var clockNow by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(Unit) {
@@ -348,49 +350,74 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        GentleAwarenessCard(prefs = prefs)
-
-        Card(colors = CardDefaults.cardColors(containerColor = RoutineGreen)) {
-            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = RoutineGreen), shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 Text("روتين يومك", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("نظّم ما تريد تذكّره، لا كل دقيقة في يومك.", color = Color(0xFFE8D7A9), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
-                    "رتّب يومك حول الصلاة وما تختاره من تعلم وعادات وعبادات. التذكير تذكرة قابلة للتخطي، وليس اختبارًا لك.",
-                    color = Color.White.copy(alpha = .92f)
+                    "أضف تذكيرًا واحدًا يناسب حياتك — للاستيقاظ أو الطعام أو النوم أو موعد شخصي. يمكنك تأجيله أو إيقافه أو حذفه في أي وقت. هذه أداة تنظيم اختيارية وليست قائمة واجبات.",
+                    color = Color.White.copy(alpha = .94f)
                 )
             }
         }
 
-        Card(colors = CardDefaults.cardColors(containerColor = RoutinePale)) {
+        Card(colors = CardDefaults.cardColors(containerColor = RoutinePale), shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("وقت وجودك داخل التطبيق", color = RoutineGreen, fontWeight = FontWeight.Bold)
-                Text(formatRoutineDuration(inAppTime), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text("آخر جلسة: ${formatRoutineDuration(lastSession)}", style = MaterialTheme.typography.bodySmall)
-                Text(
-                    "هذا يحسب بقاء التطبيق في الواجهة فقط؛ لا يعني أن كل هذه المدة كانت تعلمًا أو عبادة.",
-                    color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall
-                )
+                Text("ابدأ ببساطة", color = RoutineGreen, fontWeight = FontWeight.Bold)
+                Text("اختر تذكيرًا واحدًا أولًا. بعد حفظه ستراه هنا ويمكنك تعديله أو إيقافه.")
+                Text("لا نحتاج إلى صلاحية جهات الاتصال أو قراءة رسائلك لإنشاء التذكيرات.", color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall)
             }
         }
 
-        ScreenTimeUsageCard(prefs = prefs)
+        OutlinedButton(
+            onClick = { showAdvancedTools = !showAdvancedTools },
+            modifier = Modifier.fillMaxWidth(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+        ) { Text(if (showAdvancedTools) "إخفاء أدوات المتابعة الإضافية" else "أدوات متابعة إضافية — اختيارية") }
+        if (showAdvancedTools) {
+            Card(colors = CardDefaults.cardColors(containerColor = RoutinePale)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text("وقت وجودك داخل التطبيق", color = RoutineGreen, fontWeight = FontWeight.Bold)
+                    Text(formatRoutineDuration(inAppTime), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text("آخر جلسة: ${formatRoutineDuration(lastSession)}", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "هذا يحسب بقاء التطبيق في الواجهة فقط؛ لا يعني أن كل هذه المدة كانت تعلمًا أو عبادة.",
+                        color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+    
+            ScreenTimeUsageCard(prefs = prefs)
+    
+    
+            GentleAwarenessCard(prefs = prefs)
+        }
 
         Card(colors = CardDefaults.cardColors(containerColor = RoutineCream)) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("خطوة اليوم", color = RoutineGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text("اختر فعلًا واحدًا تود الاهتمام به اليوم، أو اتركه دون اختيار.")
                 challengeOptions.forEach { option ->
-                    FilterChip(
-                        selected = selectedChallenge == option,
-                        onClick = {
+                    Row(
+                        Modifier.fillMaxWidth().clickable {
                             selectedChallenge = if (selectedChallenge == option) "" else option
                             challengeDone = false
-                            prefs.edit()
-                                .putString("daily_step_$todayKey", selectedChallenge)
-                                .putBoolean("daily_step_done_$todayKey", false)
-                                .apply()
-                        },
-                        label = { Text(option) }
-                    )
+                            prefs.edit().putString("daily_step_$todayKey", selectedChallenge)
+                                .putBoolean("daily_step_done_$todayKey", false).apply()
+                        }.padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedChallenge == option,
+                            onClick = {
+                                selectedChallenge = if (selectedChallenge == option) "" else option
+                                challengeDone = false
+                                prefs.edit().putString("daily_step_$todayKey", selectedChallenge)
+                                    .putBoolean("daily_step_done_$todayKey", false).apply()
+                            }
+                        )
+                        Text(option, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
                 if (selectedChallenge.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
