@@ -455,30 +455,6 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
             ) { Text("إضافة منبه") }
         }
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            listOf("استيقاظ", "وجبة", "نوم", "مخصص").forEach { category ->
-                OutlinedButton(
-                    onClick = {
-                        editingReminderId = null
-                        draftCategory = category
-                        draftTitle = when (category) {
-                            "استيقاظ" -> "الاستيقاظ"
-                            "وجبة" -> "موعد الطعام"
-                            "نوم" -> "الاستعداد للنوم"
-                            else -> "تذكير شخصي"
-                        }
-                        draftHour = when (category) { "استيقاظ" -> 7; "وجبة" -> 14; "نوم" -> 22; else -> 9 }
-                        draftMinute = 0
-                        selectedDays.clear()
-                        selectedDays.addAll((1..7).toList())
-                        showEditor = true
-                    },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                ) { Text(category, style = MaterialTheme.typography.labelSmall) }
-            }
-        }
-
         if (reminders.isEmpty()) {
             Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
                 Text(
