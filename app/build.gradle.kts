@@ -7,7 +7,14 @@ plugins {
 android {
  namespace = "com.salati.app"
  compileSdk = 35
- defaultConfig { applicationId = "com.salati.app"; minSdk = 26; targetSdk = 35; versionCode = 5; versionName = "1.3.1" }
+ defaultConfig {
+  applicationId = "com.salati.app"
+  minSdk = 26
+  targetSdk = 35
+  versionCode = 5
+  versionName = "1.3.1"
+  resValue("string", "app_name", "الصَّلَاةُ جَامِعَةٌ")
+ }
 
  signingConfigs {
   val releaseStorePath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -25,6 +32,12 @@ android {
   }
  }
  buildTypes {
+  getByName("debug") {
+   // Keep the test build installable beside the signed production app.
+   applicationIdSuffix = ".debug"
+   versionNameSuffix = "-test"
+   resValue("string", "app_name", "الصَّلَاةُ جَامِعَةٌ - تجريبي")
+  }
   getByName("release") {
    isMinifyEnabled = false
    if (signingConfigs.findByName("release") != null) {

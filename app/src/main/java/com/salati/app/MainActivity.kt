@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         PrayerNotifications.createChannel(this)
         AppUpdateWorker.schedule(this)
-        setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }) }
-        if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false)) requestLocationPermissions()
+        getSharedPreferences("salati", MODE_PRIVATE).edit().putLong("app_session_started_at", 0L).apply()
+        setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }, initialRoute = when { intent?.getBooleanExtra("open_daily_routine", false) == true -> "روتين_اليوم"; intent?.getBooleanExtra("open_awareness", false) == true -> "وعي"; else -> null }) }
+        if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false) && getSharedPreferences("salati", MODE_PRIVATE).getBoolean("experience_v2_onboarding_done", false)) requestLocationPermissions()
     }
     private fun requestLocationPermissions() {
         val needed = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -85,8 +86,41 @@ class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume()
+        val prefs = getSharedPreferences("salati", MODE_PRIVATE)
+        if (prefs.getLong("app_session_started_at", 0L) == 0L) {
+            prefs.edit().putLong("app_session_started_at", System.currentTimeMillis()).apply()
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) getLocationAndSchedule()
+    }
+
+    override fun onPause() {
+        recordForegroundSession()
+        super.onPause()
+    }
+
+    private fun recordForegroundSession() {
+        val prefs = getSharedPreferences("salati", MODE_PRIVATE)
+        val start = prefs.getLong("app_session_started_at", 0L)
+        val end = System.currentTimeMillis()
+        if (start <= 0L || end <= start) {
+            prefs.edit().putLong("app_session_started_at", 0L).apply()
+            return
+        }
+        val zone = ZoneId.systemDefault()
+        var cursor = start
+        while (cursor < end) {
+            val date = Instant.ofEpochMilli(cursor).atZone(zone).toLocalDate()
+            val nextDay = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            val segmentEnd = minOf(end, nextDay)
+            val key = "app_time_ms_" + date.toString()
+            prefs.edit().putLong(key, prefs.getLong(key, 0L) + (segmentEnd - cursor)).apply()
+            cursor = segmentEnd
+        }
+        prefs.edit()
+            .putLong("app_last_session_ms", end - start)
+            .putLong("app_session_started_at", 0L)
+            .apply()
     }
     private fun getLocationAndSchedule() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -147,10 +181,11 @@ private fun CounterCard(title: String, remaining: Int, unit: String, actionLabel
 }
 
 @Composable
-fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
+fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("salati", 0) }
     var introSeen by remember { mutableStateOf(prefs.getBoolean("intro_seen", false)) }
+    var experienceOnboardingDone by remember { mutableStateOf(prefs.getBoolean("experience_v2_onboarding_done", false)) }
     var qadaPrayersDone by remember { mutableIntStateOf(prefs.getInt("prayers_done", 0)) }
     var qadaFastsDone by remember { mutableIntStateOf(prefs.getInt("fasts_done", 0)) }
     val qadaDoneByPrayer = remember { androidx.compose.runtime.mutableStateMapOf<String, Int>().apply { PrayerNames.forEach { put(it, prefs.getInt("qada_done_" + it, 0)) } } }
@@ -158,7 +193,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var missedSinceInstall by remember { mutableIntStateOf(prefs.getInt("missed_since_install", 0)) }
     var prayerBase by remember { mutableIntStateOf(prefs.getInt("prayer_base", -1)) }
     var fastBase by remember { mutableIntStateOf(prefs.getInt("fast_base", -1)) }
-    var mainTab by remember { mutableStateOf("الرئيسية") }
+    var mainTab by remember { mutableStateOf(initialRoute ?: "الرئيسية") }
     val navigationHistory = remember { mutableStateListOf<Pair<String, String>>() }
     var activeSection by remember { mutableStateOf("البداية") }
     fun navigateTo(destination: String) {
@@ -251,7 +286,15 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     val prayerRemaining = if (prayerBase >= 0) (prayerBase + missedByPrayer.values.sum() - qadaDoneByPrayer.values.sum()).coerceAtLeast(0) else 0
     val fastRemaining = if (fastBase >= 0) (fastBase - qadaFastsDone).coerceAtLeast(0) else 0
 
-    if (!introSeen) {
+    if (!experienceOnboardingDone) {
+        ExperienceOnboardingScreen(
+            onFinish = {
+                prefs.edit().putBoolean("experience_v2_onboarding_done", true).apply()
+                experienceOnboardingDone = true
+                if (introSeen) onFirstLaunchAccepted()
+            }
+        )
+    } else if (!introSeen) {
         FirstLaunchNotice {
             prefs.edit().putBoolean("intro_seen", true).apply()
             introSeen = true
@@ -284,8 +327,17 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
         ) {
         if (mainTab == "الرئيسية") {
             Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeDashboard(
+                HomeDashboardV2(
                     dateText = hijriDateText,
+                    nextPrayerName = nextPrayer.name,
+                    nextPrayerTime = Instant.ofEpochMilli(nextPrayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter),
+                    nextPrayerCountdown = countdown,
+                    todayPrayerTimes = todayTimes.map { prayer ->
+                        prayer.name to Instant.ofEpochMilli(prayer.time).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("hh:mm", Locale("ar")))
+                    },
+                    resumeReadingLabel = if (prefs.contains("quran_surah") && prefs.contains("quran_ayah")) {
+                        "استكمال القراءة · " + (prefs.getString("quran_surah", "") ?: "") + " · آية " + (prefs.getString("quran_ayah", "") ?: "")
+                    } else "",
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     onOpen = { section, destination, subTab ->
                         activeSection = section
@@ -306,12 +358,19 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                         }
                     }
                 )
-                BottomNavigationBar(selected = activeSection, onSelect = { destination ->
-                    activeSection = destination
-                    mainTab = when (destination) {
-                        "البداية" -> "الرئيسية"
-                        "الإحصائيات" -> "الإحصائيات"
-                        else -> "الإعدادات"
+                BottomNavigationBar(selected = when (mainTab) {
+                    "وعي" -> "وعي"
+                    "العبادة", "الصلاة", "الصوم", "السنن", "الأذكار", "الأدعية", "قيام الليل", "المصحف", "تدبر القرآن", "فقه الصلاة", "التعلم_الأسبوعي" -> "العبادة"
+                    "الخير_والناس", "الإنفاق", "روتين_اليوم", "صلة_الرحم" -> "الخير والناس"
+                    else -> "الرئيسية"
+                }, onSelect = { destination ->
+                    navigationHistory.clear()
+                    sectionSubTab = ""
+                    when (destination) {
+                        "الرئيسية" -> { activeSection = "البداية"; mainTab = "الرئيسية" }
+                        "وعي" -> { activeSection = "وعي"; mainTab = "وعي" }
+                        "العبادة" -> { activeSection = "العبادة"; mainTab = "العبادة" }
+                        "الخير والناس" -> { activeSection = "الخير والناس"; mainTab = "الخير_والناس" }
                     }
                 })
             }
@@ -332,7 +391,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
-            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات") {
+            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي" && mainTab != "روتين_اليوم" && mainTab != "وعي" && mainTab != "الإنفاق" && mainTab != "العبادة" && mainTab != "الخير_والناس") {
                 item {
                     SectionNavigation(
                         section = when {
@@ -372,14 +431,32 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item { QiyamHistoryScreen(prefs = prefs) }
             } else if (mainTab == "قيام_إنهاء") {
                 item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
-            } else if (mainTab == "الإنفاق") {
+            } else if (mainTab == "العبادة") {
                 item {
-                    SectionPlaceholder(
-                        title = "الإنفاق",
-                        subtitle = "الزكاة والصدقة والإنفاق في وجوه الخير",
-                        detail = "هذا القسم مبدئي. سنبني حاسبة الزكاة ومتابعة الصدقات بعد تحديد الضوابط والمصادر الشرعية وطريقة الحساب."
-                    )
+                    WorshipAreaHubScreen { section, destination, subTab ->
+                        navigationHistory.add(mainTab to activeSection)
+                        activeSection = section
+                        mainTab = destination
+                        sectionSubTab = subTab
+                    }
                 }
+            } else if (mainTab == "الخير_والناس") {
+                item {
+                    GoodPeopleAreaHubScreen { section, destination, subTab ->
+                        navigationHistory.add(mainTab to activeSection)
+                        activeSection = section
+                        mainTab = destination
+                        sectionSubTab = subTab
+                    }
+                }
+            } else if (mainTab == "الإنفاق") {
+                item { RemembranceCareScreen(prefs = prefs, initialTab = sectionSubTab) }
+            } else if (mainTab == "التعلم_الأسبوعي") {
+                item { WeeklyLearningScreen(prefs = prefs) }
+            } else if (mainTab == "روتين_اليوم") {
+                item { DailyRoutineScreen(prefs = prefs) }
+            } else if (mainTab == "وعي") {
+                item { AwarenessHubScreen(prefs = prefs) }
             } else if (mainTab == "التفكر") {
                 item {
                     SectionPlaceholder(
@@ -804,11 +881,63 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 }
             } else if (mainTab == "قيام الليل") {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                            Text("اختر بين التعرف على السنن وبدء جلسة مستقلة للقراءة والتسجيل.")
+                    val zone = ZoneId.systemDefault()
+                    val nightStartText = Instant.ofEpochMilli(nightStart).atZone(zone).format(timeFormatter)
+                    val nightEndText = Instant.ofEpochMilli(nightEnd).atZone(zone).format(timeFormatter)
+                    val thirdStartText = Instant.ofEpochMilli(lastThirdStart).atZone(zone).format(timeFormatter)
+                    val nightIsOpen = clockNow >= nightStart && clockNow < nightEnd
+                    val savedSession = prefs.contains("qiyam_active_start_surah_name")
+                    val startLabel = if (savedSession) "استكمال القراءة" else "ابدأ جلسة قيام الليل"
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Card(colors = CardDefaults.cardColors(containerColor = Green)) {
+                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("قيام الليل", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium)
+                                Text(
+                                    if (nightIsOpen) "وقت الليل الآن — يمكنك البدء بما تيسر."
+                                    else "وقت قيام الليل يبدأ بعد المغرب ويمتد إلى طلوع الفجر.",
+                                    color = Color.White.copy(alpha = .94f)
+                                )
+                                HorizontalDivider(color = Color.White.copy(alpha = .28f))
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Column {
+                                        Text("المغرب", color = Color.White.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
+                                        Text(nightStartText, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text("الفجر", color = Color.White.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
+                                        Text(nightEndText, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                                Text("بداية الثلث الأخير تقريبًا: $thirdStartText", color = Color(0xFFF3D99F), fontWeight = FontWeight.SemiBold)
+                            }
                         }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                                Text("ابدأ من حيث أنت", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                Text("لا يلزم انتظار الثلث الأخير؛ يمكنك أن تصلي من بعد العشاء إلى الفجر، وتختار ما يناسب قدرتك.")
+                                Button(onClick = { navigateTo("قيام_الجلسة") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
+                                    Text(startLabel)
+                                }
+                                if (savedSession) {
+                                    Text("موضع قراءة سابق محفوظ على هذا الجهاز. يمكنك استكماله أو إنهاء الجلسة الحالية.", color = Color(0xFF756A55), style = MaterialTheme.typography.bodySmall)
+                                    OutlinedButton(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth()) {
+                                        Text("إنهاء الجلسة وحفظها")
+                                    }
+                                }
+                            }
+                        }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("ماذا تريد أن تفعل؟", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                OutlinedButton(onClick = { navigateTo("قيام_السنن") }, modifier = Modifier.fillMaxWidth()) { Text("تعرف على صفة الصلاة والوتر") }
+                                OutlinedButton(onClick = { navigateTo("قيام_الفضل") }, modifier = Modifier.fillMaxWidth()) { Text("فضل قيام الليل وأدلته") }
+                                OutlinedButton(onClick = { navigateTo("قيام_السجل") }, modifier = Modifier.fillMaxWidth()) { Text("مراجعة الجلسات السابقة") }
+                            }
+                        }
+                        Text(
+                            "الثلث الأخير وقت فاضل، لكنه ليس الوقت الوحيد لقيام الليل. الأوقات المعروضة تقديرية بحسب مواقيت الصلاة المحفوظة في التطبيق.",
+                            color = Color(0xFF755F45), style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             } else if (mainTab == "قيام_الجلسة") {
@@ -923,15 +1052,21 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             item { Spacer(Modifier.height(12.dp)) }
         }
         BottomNavigationBar(
-            selected = activeSection,
+            selected = when (mainTab) {
+                "وعي" -> "وعي"
+                "الصلاة", "الصوم", "السنن", "الأذكار", "الأدعية", "قيام الليل", "المصحف" -> "العبادة"
+                "الإنفاق", "روتين_اليوم", "صلة_الرحم" -> "الخير والناس"
+                else -> "الرئيسية"
+            },
             onSelect = { destination ->
-                activeSection = destination
-                mainTab = when (destination) {
-                    "البداية" -> "الرئيسية"
-                    "الإحصائيات" -> "الإحصائيات"
-                    else -> "الإعدادات"
-                }
+                navigationHistory.clear()
                 sectionSubTab = ""
+                when (destination) {
+                    "الرئيسية" -> { activeSection = "البداية"; mainTab = "الرئيسية" }
+                    "وعي" -> { activeSection = "وعي"; mainTab = "وعي" }
+                    "العبادة" -> { activeSection = "العبادة"; mainTab = "الصلاة"; sectionSubTab = "تسجيل الصلاة" }
+                    "الخير والناس" -> { activeSection = "الخير والناس"; mainTab = "الإنفاق" }
+                }
             }
         )
         }
@@ -1167,5 +1302,81 @@ private fun QuranReflectionScreen(prefs: android.content.SharedPreferences, cont
             }) { Text("حذف") } },
             dismissButton = { TextButton(onClick = { deleteIndex = -1 }) { Text("إلغاء") } }
         )
+    }
+}
+
+
+@Composable
+private fun ExperienceOnboardingScreen(onFinish: () -> Unit) {
+    var page by remember { mutableIntStateOf(0) }
+    val pages = listOf(
+        Triple("الصلاة جامعة", "رفيق يذكّرك ويعينك على الفهم والعمل", "ليس التطبيق مقياسًا لإيمانك، ولا بديلًا عن أهل العلم. هو مساحة تجمع التذكير والعبادة والتعلّم والخير، وتترك لك حرية الاختيار."),
+        Triple("أربعة أبواب واضحة", "كل باب له وظيفة محددة", "الرئيسية: تعرفك على يومك والصلاة القادمة.\nوعي: تتعلم من مصادر واضحة وتربط العلم بالواقع.\nالعبادة: الصلاة والقرآن والقيام والصيام والقضاء.\nالخير والناس: صلة الرحم والدعاء والإنفاق والتذكير."),
+        Triple("ابدأ بما تحتاجه الآن", "لا يلزمك إعداد كل شيء", "تقدر تتصفح التطبيق دون مشاركة موقعك أو تفعيل الإشعارات. سنطلب الإذن فقط عندما تستخدم ميزة تحتاج إليه، وسنوضح لك السبب قبل ذلك.")
+    )
+    val current = pages[page]
+    Surface(Modifier.fillMaxSize(), color = Color(0xFFF6F2E9)) {
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("دليل البداية", color = Color(0xFF765F3C), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = onFinish) { Text("تخطي", color = Color(0xFF52645A)) }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    repeat(pages.size) { index ->
+                        Surface(
+                            Modifier.weight(1f).height(5.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                            color = if (index <= page) Color(0xFF164B3A) else Color(0xFFD8D2C4)
+                        ) {}
+                    }
+                }
+                Spacer(Modifier.height(18.dp))
+                Surface(
+                    Modifier.size(76.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                    color = Color(0xFFE5EBDD)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(if (page == 0) "ص" else if (page == 1) "٤" else "✓", color = Color(0xFF164B3A), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Text(current.first, color = Color(0xFF164B3A), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(current.second, color = Color(0xFF8A7048), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(current.third, color = Color(0xFF343A35), style = MaterialTheme.typography.bodyLarge, lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.25)
+                if (page == 1) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            "الرئيسية" to "ملخص يومك وخطوتك التالية",
+                            "وعي" to "تعلم منظم ومصادر واضحة",
+                            "العبادة" to "أدوات عملية للعبادات",
+                            "الخير والناس" to "تذكير بالعلاقات وأبواب الخير"
+                        ).forEach { item ->
+                            Surface(color = Color.White, shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)) {
+                                Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(item.first, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold, modifier = Modifier.width(112.dp))
+                                    Text(item.second, color = Color(0xFF555D55), style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { if (page < pages.lastIndex) page++ else onFinish() },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A)),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                ) { Text(if (page == pages.lastIndex) "ابدأ استخدام التطبيق" else "التالي", style = MaterialTheme.typography.titleMedium) }
+                if (page > 0) {
+                    TextButton(onClick = { page-- }, modifier = Modifier.fillMaxWidth()) { Text("رجوع", color = Color(0xFF52645A)) }
+                }
+                Text("يمكنك فتح دليل البداية مرة أخرى من المساعدة داخل التطبيق.", color = Color(0xFF77766F), style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
