@@ -286,6 +286,9 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             Column(Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 HomeDashboardV2(
                     dateText = hijriDateText,
+                    nextPrayerName = nextPrayer.name,
+                    nextPrayerTime = Instant.ofEpochMilli(nextPrayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter),
+                    nextPrayerCountdown = countdown,
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     onOpen = { section, destination, subTab ->
                         activeSection = section
