@@ -14,8 +14,8 @@ private val CarePale = Color(0xFFE5EBDD)
 private val CareCream = Color(0xFFF6F2E9)
 
 @Composable
-fun RemembranceCareScreen(prefs: SharedPreferences) {
-    var selected by remember { mutableStateOf("أشخاص في دعائك") }
+fun RemembranceCareScreen(prefs: SharedPreferences, initialTab: String = "أشخاص في دعائك") {
+    var selected by remember { mutableStateOf(if (initialTab == "صلة الرحم") "صلة الرحم" else "أشخاص في دعائك") }
     var name by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var people by remember { mutableStateOf(prefs.getStringSet("care_remembrance_people", emptySet())?.toList()?.sorted().orEmpty()) }
