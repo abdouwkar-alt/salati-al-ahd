@@ -19,13 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
+
+private val UsageGreen = Color(0xFF164B3A)
 
 private const val USAGE_SELECTED_KEY = "usage_selected_apps"
 private const val USAGE_ALERTS_KEY = "usage_alerts_enabled"
@@ -203,7 +205,7 @@ fun ScreenTimeUsageCard(prefs: android.content.SharedPreferences) {
 
     Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("وقت التطبيقات الأخرى — اختياري", color = RoutineGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text("وقت التطبيقات الأخرى — اختياري", color = UsageGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text(
                 "يمكنك اختيار تطبيقات محددة لمعرفة مدة ظهورها على الشاشة. يقرأ التطبيق اسم التطبيق والمدة الإجمالية فقط؛ لا يقرأ الرسائل أو المنشورات أو سجل البحث. البيانات تبقى على هذا الجهاز.",
                 style = MaterialTheme.typography.bodySmall
@@ -244,7 +246,7 @@ fun ScreenTimeUsageCard(prefs: android.content.SharedPreferences) {
                     }
                 }
                 if (selectedPackages.isNotEmpty()) {
-                    HorizontalDivider(color = RoutinePale)
+                    HorizontalDivider(color = Color(0xFFE5EBDD))
                     Text("الحد اليومي لكل تطبيق مختار", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         listOf(30, 45, 60, 90, 120).forEach { minutes ->
