@@ -296,7 +296,7 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
                     Checkbox(checked = digestEnabled, onCheckedChange = { enabled ->
                         digestEnabled = enabled
                         prefs.edit().putBoolean("gaza_digest_enabled", enabled).apply()
-                        setGazaDigest(context = androidx.compose.ui.platform.LocalContext.current, enabled = enabled)
+                        setGazaDigest(context = context, enabled = enabled)
                     })
                     Column(Modifier.weight(1f)) {
                         Text("أرسل لي موجز غزة مرة يوميًا")
