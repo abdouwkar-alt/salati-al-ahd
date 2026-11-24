@@ -111,7 +111,7 @@ fun HomeDashboardV2(
     nextPrayerCountdown: String = ""
 ) {
     Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        JvHeader(dateText)
+        JvHeader(dateText, onOpenLearning = { onOpen("البداية", "التعلم_الأسبوعي", "حديث الأسبوع") })
         if (nextPrayerName.isNotBlank()) {
             JvPrayerFocus(
                 prayerName = nextPrayerName,
@@ -157,7 +157,7 @@ private fun JvPrayerFocus(
 }
 
 @Composable
-private fun JvHeader(dateText: String) {
+private fun JvHeader(dateText: String, onOpenLearning: () -> Unit) {
     Box(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
@@ -179,6 +179,12 @@ private fun JvHeader(dateText: String) {
                 color = JvGold, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall
             )
             Text(dateText, color = Color.White.copy(alpha = .72f), style = MaterialTheme.typography.labelSmall)
+            Text(
+                "تعلّم حديث الأسبوع",
+                modifier = Modifier.clickable(onClick = onOpenLearning).padding(vertical = 2.dp),
+                color = JvGold, fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium
+            )
         }
         Box(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth(.35f).height(1.dp)
