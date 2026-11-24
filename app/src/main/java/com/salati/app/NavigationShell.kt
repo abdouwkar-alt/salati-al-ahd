@@ -478,8 +478,8 @@ fun SectionPlaceholder(title: String, subtitle: String, detail: String) {
 @Composable
 fun BottomNavigationBar(selected: String, onSelect: (String) -> Unit) {
     val destinations = listOf(
-        "الخير والناس" to "خير",
-        "العبادة" to "عبادة",
+        "الخير والناس" to "الخير والناس",
+        "العبادة" to "العبادة",
         "وعي" to "وعي",
         "الرئيسية" to "الرئيسية"
     )
