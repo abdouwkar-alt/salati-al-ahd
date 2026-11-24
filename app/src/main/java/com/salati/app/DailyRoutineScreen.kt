@@ -348,6 +348,8 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        GentleAwarenessCard(prefs = prefs)
+
         Card(colors = CardDefaults.cardColors(containerColor = RoutineGreen)) {
             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("روتين يومك", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -675,6 +677,79 @@ private fun RoutineReminderLearningCard(category: String) {
                 Text("هذا فيمن نوى قيام الليل ثم غلبه النوم؛ وليس معناه أن كل نوم يُحسب عبادة تلقائيًا دون نية.", color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { runCatching { uriHandler.openUri("https://sunnah.com/nasai/20/190") } }) { Text("مصدر الحديث") }
             }
+        }
+    }
+}
+
+@Composable
+private fun GentleAwarenessCard(prefs: android.content.SharedPreferences) {
+    val stages = listOf(
+        "أريد أن أبدأ بهدوء",
+        "أحاول المحافظة والاستمرار",
+        "أريد أن أتعلم وأفهم أكثر",
+        "أريد تنظيم وقتي وعاداتي"
+    )
+    val focusOptions = listOf(
+        "الصلاة", "القرآن والتدبر", "السنة والأذكار", "قيام الليل",
+        "العلم والتعلم", "الصيام والقضاء", "الأسرة وصلة الرحم", "تقليل التشتت"
+    )
+    val reminderModes = listOf("هادئ", "متوازن", "أحتاج تذكيرًا أوضح")
+    var stage by remember {
+        mutableStateOf(prefs.getString("gentle_stage", "") ?: "")
+    }
+    var focus by remember {
+        mutableStateOf(prefs.getString("gentle_focus", "") ?: "")
+    }
+    var mode by remember {
+        mutableStateOf(prefs.getString("gentle_reminder_mode", "هادئ") ?: "هادئ")
+    }
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(colors = CardDefaults.cardColors(containerColor = RoutinePale)) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("وعي: ما الذي تحتاجه الآن؟", color = RoutineGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text("اختر ما يصف احتياجك اليوم، لا ما يقيّمك. يمكنك تخطي كل شيء أو تغييره متى شئت.", style = MaterialTheme.typography.bodySmall)
+            Text("المرحلة التي أختارها لنفسي", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
+            stages.forEach { option ->
+                FilterChip(
+                    selected = stage == option,
+                    onClick = {
+                        stage = if (stage == option) "" else option
+                        prefs.edit().putString("gentle_stage", stage).apply()
+                    },
+                    label = { Text(option) }
+                )
+            }
+            HorizontalDivider(color = Color(0xFFD6DED2))
+            Text("ما الذي تريد التركيز عليه؟", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
+            focusOptions.forEach { option ->
+                FilterChip(
+                    selected = focus == option,
+                    onClick = {
+                        focus = if (focus == option) "" else option
+                        prefs.edit().putString("gentle_focus", focus).apply()
+                    },
+                    label = { Text(option) }
+                )
+            }
+            HorizontalDivider(color = Color(0xFFD6DED2))
+            Text("أسلوب التذكير", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                reminderModes.forEach { option ->
+                    FilterChip(
+                        selected = mode == option,
+                        onClick = {
+                            mode = option
+                            prefs.edit().putString("gentle_reminder_mode", mode).apply()
+                        },
+                        label = { Text(option, style = MaterialTheme.typography.labelSmall) }
+                    )
+                }
+            }
+            Text(
+                "هذه اختيارات ذاتية محلية فقط. التطبيق لا يستنتج حالتك النفسية أو درجة التزامك ولا يشارك هذه البيانات.",
+                color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }
