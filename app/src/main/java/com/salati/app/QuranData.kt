@@ -257,13 +257,19 @@ fun QuranReaderSection(
                                 Text("صحيح مسلم، حديث ١١٦٣", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                             }
                         }
+                        val hasSavedSession = prefs.contains("qiyam_active_start_surah_name") &&
+                            (prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.isNotEmpty() == true)
                         Button(onClick = {
-                            readAyahKeys = setOf("${current.number}:${selectedAyah}")
-                            prefs.edit().putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
-                            onSessionStart?.invoke(current.number, current.name, selectedAyah)
+                            if (!hasSavedSession) {
+                                readAyahKeys = setOf("${current.number}:${selectedAyah}")
+                                prefs.edit().putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
+                                onSessionStart?.invoke(current.number, current.name, selectedAyah)
+                            } else {
+                                readAyahKeys = prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.toSet() ?: emptySet()
+                            }
                             readerOpen = true
                         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A))) {
-                            Text("ابدأ القراءة")
+                            Text(if (hasSavedSession) "استكمال الجلسة المحفوظة" else "ابدأ القراءة")
                         }
                     } else {
                         Text("اضغط على أي آية لتثبيت موضع القراءة الحالي.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5F665F))
