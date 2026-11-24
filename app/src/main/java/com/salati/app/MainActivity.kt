@@ -291,6 +291,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
             onFinish = {
                 prefs.edit().putBoolean("experience_v2_onboarding_done", true).apply()
                 experienceOnboardingDone = true
+                if (introSeen) onFirstLaunchAccepted()
             }
         )
     } else if (!introSeen) {
