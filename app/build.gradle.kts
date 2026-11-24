@@ -25,6 +25,11 @@ android {
   }
  }
  buildTypes {
+  getByName("debug") {
+   // Keep the test build installable beside the signed production app.
+   applicationIdSuffix = ".debug"
+   versionNameSuffix = "-test"
+  }
   getByName("release") {
    isMinifyEnabled = false
    if (signingConfigs.findByName("release") != null) {
