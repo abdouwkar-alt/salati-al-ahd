@@ -263,8 +263,16 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
                         Column(Modifier.fillMaxWidth().padding(11.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                 Text("${index + 1}. $module", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                                TextButton(onClick = { expandedModule = if (expandedModule == module) "" else module }) {
-                                    Text(if (expandedModule == module) "إخفاء" else "افتح")
+                                TextButton(onClick = {
+                                    if (expandedModule == module) {
+                                        expandedModule = ""
+                                    } else {
+                                        expandedModule = module
+                                        lessonNote = prefs.getString("awareness_note_" + path.id + ":" + module, "") ?: ""
+                                        lessonFeedback = ""
+                                    }
+                                }) {
+                                    Text(if (expandedModule == module) "إخفاء" else if ((path.id + ":" + module) in reviewedLessons) "راجعت الدرس" else "افتح")
                                 }
                             }
                             if (expandedModule == module) {
