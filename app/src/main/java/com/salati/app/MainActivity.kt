@@ -332,6 +332,9 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                     nextPrayerName = nextPrayer.name,
                     nextPrayerTime = Instant.ofEpochMilli(nextPrayer.time).atZone(ZoneId.systemDefault()).format(timeFormatter),
                     nextPrayerCountdown = countdown,
+                    todayPrayerTimes = todayTimes.map { prayer ->
+                        prayer.name to Instant.ofEpochMilli(prayer.time).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("hh:mm", Locale("ar")))
+                    },
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     onOpen = { section, destination, subTab ->
                         activeSection = section
@@ -354,8 +357,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                 )
                 BottomNavigationBar(selected = when (mainTab) {
                     "وعي" -> "وعي"
-                    "الصلاة", "الصوم", "السنن", "الأذكار", "الأدعية", "قيام الليل", "المصحف", "تدبر القرآن", "فقه الصلاة", "التعلم_الأسبوعي" -> "العبادة"
-                    "الإنفاق", "روتين_اليوم", "صلة_الرحم" -> "الخير والناس"
+                    "العبادة", "الصلاة", "الصوم", "السنن", "الأذكار", "الأدعية", "قيام الليل", "المصحف", "تدبر القرآن", "فقه الصلاة", "التعلم_الأسبوعي" -> "العبادة"
+                    "الخير_والناس", "الإنفاق", "روتين_اليوم", "صلة_الرحم" -> "الخير والناس"
                     else -> "الرئيسية"
                 }, onSelect = { destination ->
                     navigationHistory.clear()
@@ -363,8 +366,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                     when (destination) {
                         "الرئيسية" -> { activeSection = "البداية"; mainTab = "الرئيسية" }
                         "وعي" -> { activeSection = "وعي"; mainTab = "وعي" }
-                        "العبادة" -> { activeSection = "العبادة"; mainTab = "الصلاة"; sectionSubTab = "تسجيل الصلاة" }
-                        "الخير والناس" -> { activeSection = "الخير والناس"; mainTab = "الإنفاق" }
+                        "العبادة" -> { activeSection = "العبادة"; mainTab = "العبادة" }
+                        "الخير والناس" -> { activeSection = "الخير والناس"; mainTab = "الخير_والناس" }
                     }
                 })
             }
@@ -385,7 +388,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
-            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي" && mainTab != "روتين_اليوم" && mainTab != "وعي" && mainTab != "الإنفاق") {
+            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي" && mainTab != "روتين_اليوم" && mainTab != "وعي" && mainTab != "الإنفاق" && mainTab != "العبادة" && mainTab != "الخير_والناس") {
                 item {
                     SectionNavigation(
                         section = when {
@@ -425,6 +428,24 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                 item { QiyamHistoryScreen(prefs = prefs) }
             } else if (mainTab == "قيام_إنهاء") {
                 item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
+            } else if (mainTab == "العبادة") {
+                item {
+                    WorshipAreaHubScreen { section, destination, subTab ->
+                        activeSection = section
+                        navigationHistory.clear()
+                        mainTab = destination
+                        sectionSubTab = subTab
+                    }
+                }
+            } else if (mainTab == "الخير_والناس") {
+                item {
+                    GoodPeopleAreaHubScreen { section, destination, subTab ->
+                        activeSection = section
+                        navigationHistory.clear()
+                        mainTab = destination
+                        sectionSubTab = subTab
+                    }
+                }
             } else if (mainTab == "الإنفاق") {
                 item { RemembranceCareScreen(prefs = prefs) }
             } else if (mainTab == "التعلم_الأسبوعي") {
