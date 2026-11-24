@@ -114,7 +114,8 @@ fun HomeDashboardV2(
         JvHeader(
             dateText,
             onOpenLearning = { onOpen("البداية", "التعلم_الأسبوعي", "حديث الأسبوع") },
-            onOpenRoutine = { onOpen("روتين يومك", "روتين_اليوم", "التذكيرات") }
+            onOpenRoutine = { onOpen("روتين يومك", "روتين_اليوم", "التذكيرات") },
+            onOpenAwareness = { onOpen("وعي", "وعي", "مسارات الوعي") }
         )
         if (nextPrayerName.isNotBlank()) {
             JvPrayerFocus(
@@ -161,7 +162,7 @@ private fun JvPrayerFocus(
 }
 
 @Composable
-private fun JvHeader(dateText: String, onOpenLearning: () -> Unit, onOpenRoutine: () -> Unit) {
+private fun JvHeader(dateText: String, onOpenLearning: () -> Unit, onOpenRoutine: () -> Unit, onOpenAwareness: () -> Unit) {
     Box(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
@@ -183,7 +184,13 @@ private fun JvHeader(dateText: String, onOpenLearning: () -> Unit, onOpenRoutine
                 color = JvGold, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall
             )
             Text(dateText, color = Color.White.copy(alpha = .72f), style = MaterialTheme.typography.labelSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "وعي",
+                    modifier = Modifier.clickable(onClick = onOpenAwareness).padding(vertical = 2.dp),
+                    color = JvGold, fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
                 Text(
                     "تعلّم حديث الأسبوع",
                     modifier = Modifier.clickable(onClick = onOpenLearning).padding(vertical = 2.dp),
