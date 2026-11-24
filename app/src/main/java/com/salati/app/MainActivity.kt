@@ -185,6 +185,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("salati", 0) }
     var introSeen by remember { mutableStateOf(prefs.getBoolean("intro_seen", false)) }
+    var experienceOnboardingDone by remember { mutableStateOf(prefs.getBoolean("experience_v2_onboarding_done", false)) }
     var qadaPrayersDone by remember { mutableIntStateOf(prefs.getInt("prayers_done", 0)) }
     var qadaFastsDone by remember { mutableIntStateOf(prefs.getInt("fasts_done", 0)) }
     val qadaDoneByPrayer = remember { androidx.compose.runtime.mutableStateMapOf<String, Int>().apply { PrayerNames.forEach { put(it, prefs.getInt("qada_done_" + it, 0)) } } }
@@ -285,7 +286,14 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
     val prayerRemaining = if (prayerBase >= 0) (prayerBase + missedByPrayer.values.sum() - qadaDoneByPrayer.values.sum()).coerceAtLeast(0) else 0
     val fastRemaining = if (fastBase >= 0) (fastBase - qadaFastsDone).coerceAtLeast(0) else 0
 
-    if (!introSeen) {
+    if (!experienceOnboardingDone) {
+        ExperienceOnboardingScreen(
+            onFinish = {
+                prefs.edit().putBoolean("experience_v2_onboarding_done", true).apply()
+                experienceOnboardingDone = true
+            }
+        )
+    } else if (!introSeen) {
         FirstLaunchNotice {
             prefs.edit().putBoolean("intro_seen", true).apply()
             introSeen = true
@@ -1256,5 +1264,81 @@ private fun QuranReflectionScreen(prefs: android.content.SharedPreferences, cont
             }) { Text("حذف") } },
             dismissButton = { TextButton(onClick = { deleteIndex = -1 }) { Text("إلغاء") } }
         )
+    }
+}
+
+
+@Composable
+private fun ExperienceOnboardingScreen(onFinish: () -> Unit) {
+    var page by remember { mutableIntStateOf(0) }
+    val pages = listOf(
+        Triple("الصلاة جامعة", "رفيق يذكّرك ويعينك على الفهم والعمل", "ليس التطبيق مقياسًا لإيمانك، ولا بديلًا عن أهل العلم. هو مساحة تجمع التذكير والعبادة والتعلّم والخير، وتترك لك حرية الاختيار."),
+        Triple("أربعة أبواب واضحة", "كل باب له وظيفة محددة", "الرئيسية: تعرفك على يومك والصلاة القادمة.\nوعي: تتعلم من مصادر واضحة وتربط العلم بالواقع.\nالعبادة: الصلاة والقرآن والقيام والصيام والقضاء.\nالخير والناس: صلة الرحم والدعاء والإنفاق والتذكير."),
+        Triple("ابدأ بما تحتاجه الآن", "لا يلزمك إعداد كل شيء", "تقدر تتصفح التطبيق دون مشاركة موقعك أو تفعيل الإشعارات. سنطلب الإذن فقط عندما تستخدم ميزة تحتاج إليه، وسنوضح لك السبب قبل ذلك.")
+    )
+    val current = pages[page]
+    Surface(Modifier.fillMaxSize(), color = Color(0xFFF6F2E9)) {
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 28.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("دليل البداية", color = Color(0xFF765F3C), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = onFinish) { Text("تخطي", color = Color(0xFF52645A)) }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    repeat(pages.size) { index ->
+                        Surface(
+                            Modifier.weight(1f).height(5.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                            color = if (index <= page) Color(0xFF164B3A) else Color(0xFFD8D2C4)
+                        ) {}
+                    }
+                }
+                Spacer(Modifier.height(18.dp))
+                Surface(
+                    Modifier.size(76.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                    color = Color(0xFFE5EBDD)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(if (page == 0) "ص" else if (page == 1) "٤" else "✓", color = Color(0xFF164B3A), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Text(current.first, color = Color(0xFF164B3A), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Text(current.second, color = Color(0xFF8A7048), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(current.third, color = Color(0xFF343A35), style = MaterialTheme.typography.bodyLarge, lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.25)
+                if (page == 1) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            "الرئيسية" to "ملخص يومك وخطوتك التالية",
+                            "وعي" to "تعلم منظم ومصادر واضحة",
+                            "العبادة" to "أدوات عملية للعبادات",
+                            "الخير والناس" to "تذكير بالعلاقات وأبواب الخير"
+                        ).forEach { item ->
+                            Surface(color = Color.White, shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)) {
+                                Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(item.first, color = Color(0xFF164B3A), fontWeight = FontWeight.Bold, modifier = Modifier.width(112.dp))
+                                    Text(item.second, color = Color(0xFF555D55), style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(
+                    onClick = { if (page < pages.lastIndex) page++ else onFinish() },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF164B3A)),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                ) { Text(if (page == pages.lastIndex) "ابدأ استخدام التطبيق" else "التالي", style = MaterialTheme.typography.titleMedium) }
+                if (page > 0) {
+                    TextButton(onClick = { page-- }, modifier = Modifier.fillMaxWidth()) { Text("رجوع", color = Color(0xFF52645A)) }
+                }
+                Text("يمكنك فتح دليل البداية مرة أخرى من المساعدة داخل التطبيق.", color = Color(0xFF77766F), style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
