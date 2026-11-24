@@ -259,10 +259,10 @@ private fun JvRoute.pointAt(d: Float): Offset {
 private fun JvJourney(onOpen: (String, String, String) -> Unit, modifier: Modifier = Modifier) {
     val doors = remember {
         listOf(
-            JvDoorSpec("وعي", "وعي", "وعي", .76f, .31f, Icons.Filled.Lightbulb),
+            JvDoorSpec("وعي", "وعي", "وعي", .76f, .31f, Icons.Filled.School),
             JvDoorSpec("الخير والناس", "الإنفاق", "الإنفاق", .24f, .47f, Icons.Filled.VolunteerActivism),
             JvDoorSpec("القرآن", "تدبر القرآن", "تدبر القرآن", .76f, .63f, Icons.Filled.MenuBook),
-            JvDoorSpec("روتين اليوم", "روتين يومك", "روتين_اليوم", .24f, .79f, Icons.Filled.EventNote)
+            JvDoorSpec("روتين اليوم", "روتين يومك", "روتين_اليوم", .24f, .79f, Icons.Filled.AutoAwesome)
         )
     }
     val verses = remember {
