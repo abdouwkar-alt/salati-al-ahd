@@ -385,7 +385,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
-            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي" && mainTab != "روتين_اليوم") {
+            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي" && mainTab != "روتين_اليوم" && mainTab != "وعي" && mainTab != "الإنفاق") {
                 item {
                     SectionNavigation(
                         section = when {
