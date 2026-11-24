@@ -447,7 +447,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                     }
                 }
             } else if (mainTab == "الإنفاق") {
-                item { RemembranceCareScreen(prefs = prefs) }
+                item { RemembranceCareScreen(prefs = prefs, initialTab = sectionSubTab) }
             } else if (mainTab == "التعلم_الأسبوعي") {
                 item { WeeklyLearningScreen(prefs = prefs) }
             } else if (mainTab == "روتين_اليوم") {
