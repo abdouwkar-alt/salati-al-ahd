@@ -431,8 +431,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
             } else if (mainTab == "العبادة") {
                 item {
                     WorshipAreaHubScreen { section, destination, subTab ->
+                        navigationHistory.add(mainTab to activeSection)
                         activeSection = section
-                        navigationHistory.clear()
                         mainTab = destination
                         sectionSubTab = subTab
                     }
@@ -440,8 +440,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
             } else if (mainTab == "الخير_والناس") {
                 item {
                     GoodPeopleAreaHubScreen { section, destination, subTab ->
+                        navigationHistory.add(mainTab to activeSection)
                         activeSection = section
-                        navigationHistory.clear()
                         mainTab = destination
                         sectionSubTab = subTab
                     }
