@@ -415,6 +415,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                 item { WeeklyLearningScreen(prefs = prefs) }
             } else if (mainTab == "روتين_اليوم") {
                 item { DailyRoutineScreen(prefs = prefs) }
+            } else if (mainTab == "وعي") {
+                item { AwarenessHubScreen(prefs = prefs) }
             } else if (mainTab == "التفكر") {
                 item {
                     SectionPlaceholder(
