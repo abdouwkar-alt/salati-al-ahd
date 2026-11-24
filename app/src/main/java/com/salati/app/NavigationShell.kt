@@ -7,6 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -33,19 +36,96 @@ fun HomeDashboard(
     onOpen: (section: String, destination: String, subTab: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Card(colors = CardDefaults.cardColors(containerColor = ShellGreen), shape = RoundedCornerShape(18.dp)) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("أشهد أن لا إله إلا الله، وأشهد أن محمدًا رسول الله", color = Color.White, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(5.dp))
-                Surface(color = ShellCream, shape = RoundedCornerShape(24.dp)) {
-                    Text("رضيت بالله ربًا، وبالإسلام دينًا، وبمحمدٍ رسولًا", color = ShellGreen, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
-                }
-                Spacer(Modifier.height(3.dp))
-                Text(dateText, color = Color.White.copy(alpha = .78f), style = MaterialTheme.typography.labelSmall)
+    data class HomeDoor(
+        val title: String,
+        val description: String,
+        val section: String,
+        val destination: String,
+        val primary: Boolean = false
+    )
+
+    val doors = listOf(
+        HomeDoor("الصلاة", "تسجيل الفروض والنوافل", "الصلاة", "الصلاة", true),
+        HomeDoor("القرآن والتدبّر", "المصحف ودفتر التدبّر", "تدبر القرآن", "تدبر القرآن"),
+        HomeDoor("الأذكار", "أذكار بأوقاتها وأدلتها", "الأذكار", "الأذكار"),
+        HomeDoor("الدعاء", "أدعية القرآن والسنة", "الدعاء", "الأدعية"),
+        HomeDoor("قيام الليل", "الفضل والسنن وسجل القيام", "الصلاة", "قيام الليل"),
+        HomeDoor("الصيام", "متابعة الصيام والقضاء", "الصوم", "الصوم"),
+        HomeDoor("السنن النبوية", "هدي النبي ﷺ في اليوم والليلة", "سنن الرسول ﷺ", "السنن"),
+        HomeDoor("التفقّه", "أبواب الوضوء والصلاة", "التفقه", "فقه الصلاة")
+    )
+
+    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = ShellGreen),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    "الصَّلَاةُ جَامِعَةٌ",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text(
+                    "﴿وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ﴾",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text("البقرة: 45  •  $dateText", color = Color.White.copy(alpha = .78f), style = MaterialTheme.typography.labelSmall)
             }
         }
-        JourneyHome(onOpen = onOpen, modifier = Modifier.weight(1f).fillMaxWidth())
+
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("ماذا تريد أن تفتح؟", color = ShellGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text("اختر بابًا، وستجد تفاصيله في صفحة مستقلة.", color = Color(0xFF77736B), style = MaterialTheme.typography.bodySmall)
+        }
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            items(doors) { door ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 88.dp).clickable {
+                        onOpen(door.section, door.destination, "")
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (door.primary) ShellGreen else Color.White
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (door.primary) ShellGreen else ShellLine
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            door.title,
+                            color = if (door.primary) Color.White else ShellGreen,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            door.description,
+                            color = if (door.primary) ShellCream else Color(0xFF77736B),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
