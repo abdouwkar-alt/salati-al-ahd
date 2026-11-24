@@ -41,6 +41,14 @@ private val awarenessPaths = listOf(
     AwarenessPath("gaza", "غزة: الخبر والإنسان", "متابعة ما يحدث في غزة من مصادر واضحة، مع الفصل بين الخبر والتقرير الإنساني والتحليل.", listOf("آخر الأخبار", "الوضع الإنساني والإغاثي", "التعليم والصحة والنزوح", "التحقق من الصور والمقاطع", "طرق المساعدة عبر جهات موثوقة"), "غزة تقارير إنسانية وتحليل موثق")
 )
 
+private data class AwarenessLesson(val pathId: String, val title: String, val sourceLabel: String, val sourceText: String, val explanation: String, val practice: String, val question: String, val sourceUrl: String)
+
+private val starterLessons = listOf(
+    AwarenessLesson("iman", "الإيمان يظهر في القول والعمل والخلق", "صحيح مسلم — كتاب الإيمان، حديث 35", "قال رسول الله ﷺ: «الإيمان بضع وسبعون — أو بضع وستون — شعبة، فأفضلها قول لا إله إلا الله، وأدناها إماطة الأذى عن الطريق، والحياء شعبة من الإيمان».", "يجمع الحديث بين أصل التوحيد، والعمل النافع للناس، وخلق الحياء. فالإيمان ليس فكرة مجردة عن السلوك، ولا يصح أن نخترع قائمة مغلقة لشُعَبه دون دليل.", "اختر أذى صغيرًا تستطيع إزالته من طريق الناس أو مكان مشترك اليوم.", "أين يظهر أثر الإيمان في تعاملاتك اليومية، بعيدًا عن الكلام؟", "https://sunnah.com/muslim:35"),
+    AwarenessLesson("akhlaq", "الرفق في التعامل", "صحيح مسلم — حديث 2593", "قال رسول الله ﷺ: «إن الرفق لا يكون في شيء إلا زانه، ولا ينزع من شيء إلا شانه».", "الرفق ليس ضعفًا ولا تنازلًا عن الحق؛ هو اختيار الأسلوب الذي يقلل الأذى ويقرب الإصلاح ما دام لا يضيّع حقًا أو يقر ظلمًا.", "في موقف واحد اليوم، جرّب أن تؤخر رد الفعل وتختار عبارة أهدأ وأوضح.", "ما الفرق بين الرفق وبين السكوت عن الخطأ أو التنازل عن الحقوق؟", "https://sunnah.com/muslim:2593"),
+    AwarenessLesson("modern", "التثبت قبل نقل الأخبار", "القرآن الكريم — سورة الحجرات، الآية 6", "قال الله تعالى: ﴿يَا أَيُّهَا الَّذِينَ آمَنُوا إِنْ جَاءَكُمْ فَاسِقٌ بِنَبَإٍ فَتَبَيَّنُوا أَنْ تُصِيبُوا قَوْمًا بِجَهَالَةٍ فَتُصْبِحُوا عَلَىٰ مَا فَعَلْتُمْ نَادِمِينَ﴾.", "تضع الآية أصلًا في التثبت قبل بناء موقف أو إلحاق ضرر بالناس. وفي البيئة الرقمية نحتاج إلى سؤال: من المصدر؟ متى نُشر؟ هل الصورة أو المقطع من الحدث نفسه؟ وهل نقلته جهة مستقلة؟", "قبل مشاركة خبر، افتح المصدر الأصلي وابحث عن تاريخ النشر وتأكيد مستقل. إن لم يتضح، لا تعِد نشره.", "ما الذي يجعلك تصدق خبرًا بسرعة؟ وكيف تتحقق قبل مشاركته؟", "https://quran.com/49/6")
+)
+
 private const val GAZA_DIGEST_WORK = "daily_gaza_news_digest"
 private const val GAZA_DIGEST_CHANNEL = "gaza_news_digest"
 
@@ -191,7 +199,9 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
     val uriHandler = LocalUriHandler.current
     val context = androidx.compose.ui.platform.LocalContext.current
     var selectedPathId by remember { mutableStateOf(prefs.getString("awareness_path_id", "iman") ?: "iman") }
-    var expandedModule by remember { mutableStateOf("") }
+    var expandedModule by remember { mutableStateOf("") }    var lessonNote by remember { mutableStateOf("") }
+    var lessonFeedback by remember { mutableStateOf("") }
+    val reviewedLessons = remember { mutableStateListOf<String>().apply { addAll(prefs.getStringSet("awareness_reviewed_lessons", emptySet()).orEmpty()) } }
     var interests by remember { mutableStateOf(prefs.getStringSet("awareness_interests", setOf("iman", "akhlaq", "seerah"))?.toSet().orEmpty()) }
     var news by remember { mutableStateOf<List<GazaNewsItem>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
@@ -258,11 +268,32 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
                                 }
                             }
                             if (expandedModule == module) {
-                                Text("هذا عنوان تعلّم. قبل اعتماد درس تفصيلي نثبت نصوصه ومصادره، ونفصل بين القرآن والحديث الصحيح والأثر والتاريخ والتحليل المعاصر.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6B6B62))
+                                val lesson = starterLessons.firstOrNull { it.pathId == path.id && it.title == module }
+                                if (lesson != null) {
+                                    Text(lesson.sourceLabel, color = AwarenessGreen, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+                                    Text(lesson.sourceText, style = MaterialTheme.typography.bodyLarge)
+                                    Text("الفهم", color = AwarenessGreen, fontWeight = FontWeight.Bold)
+                                    Text(lesson.explanation)
+                                    Text("تطبيق اختياري", color = AwarenessGreen, fontWeight = FontWeight.Bold)
+                                    Text(lesson.practice)
+                                    Text("سؤال للتفكير", color = AwarenessGreen, fontWeight = FontWeight.Bold)
+                                    Text(lesson.question)
+                                    OutlinedButton(onClick = { runCatching { uriHandler.openUri(lesson.sourceUrl) } }) { Text("راجع المصدر الأصلي") }
+                                    OutlinedTextField(value = lessonNote, onValueChange = { lessonNote = it }, modifier = Modifier.fillMaxWidth(), label = { Text("ملاحظة شخصية — اختيارية") }, minLines = 2)
+                                    Button(onClick = {
+                                        val key = path.id + ":" + lesson.title
+                                        if (key !in reviewedLessons) reviewedLessons.add(key)
+                                        prefs.edit().putStringSet("awareness_reviewed_lessons", reviewedLessons.toSet()).putString("awareness_note_" + key, lessonNote).apply()
+                                        lessonFeedback = "حُفظت ملاحظتك وسُجلت مراجعتك لهذا الدرس على هذا الجهاز."
+                                    }, colors = ButtonDefaults.buttonColors(containerColor = AwarenessGreen)) { Text("حفظ الملاحظة وتسجيل المراجعة") }
+                                    if (lessonFeedback.isNotBlank()) Text(lessonFeedback, color = AwarenessGreen, style = MaterialTheme.typography.bodySmall)
+                                } else {
+                                    Text("هذا عنوان ضمن خطة المسار، لكن مادته التفصيلية لم تُعتمد بعد. لن نعرضه كدرس مكتمل قبل مراجعة نصه ومصادره.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6B6B62))
+                                }
                                 TextButton(onClick = {
                                     val query = URLEncoder.encode("$module ${path.title} درس موثق", "UTF-8")
                                     runCatching { uriHandler.openUri("https://www.youtube.com/results?search_query=$query") }
-                                }) { Text("ابحث عن فيديوهات لهذا الموضوع") }
+                                }) { Text("اكتشف فيديوهات خارجية (ليست تزكية)") }
                             }
                         }
                     }
