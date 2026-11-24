@@ -109,7 +109,8 @@ fun HomeDashboardV2(
     nextPrayerName: String = "",
     nextPrayerTime: String = "",
     nextPrayerCountdown: String = "",
-    todayPrayerTimes: List<Pair<String, String>> = emptyList()
+    todayPrayerTimes: List<Pair<String, String>> = emptyList(),
+    resumeReadingLabel: String = ""
 ) {
     Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
         JvHeader(
@@ -128,6 +129,11 @@ fun HomeDashboardV2(
         }
         if (todayPrayerTimes.isNotEmpty()) {
             JvPrayerTimesStrip(times = todayPrayerTimes, nextPrayerName = nextPrayerName)
+        }
+        if (resumeReadingLabel.isNotBlank()) {
+            JvResumeReading(label = resumeReadingLabel) {
+                onOpen("تدبر القرآن", "تدبر القرآن", "المصحف والتدبر")
+            }
         }
         JvJourney(onOpen, Modifier.weight(1f).fillMaxWidth())
     }
@@ -174,6 +180,27 @@ private fun JvPrayerTimesStrip(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun JvResumeReading(label: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClick = onClick),
+        color = Color(0xFFE5EBDD),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 9.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text("استكمال آخر قراءة", color = JvGreen, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                Text(label, color = JvDeep, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+            }
+            Text("متابعة", color = JvGreen, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
