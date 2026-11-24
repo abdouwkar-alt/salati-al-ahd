@@ -195,18 +195,16 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
     var interests by remember { mutableStateOf(prefs.getStringSet("awareness_interests", setOf("iman", "akhlaq", "seerah"))?.toSet().orEmpty()) }
     var news by remember { mutableStateOf<List<GazaNewsItem>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
-    var loaded by remember { mutableStateOf(false) }
+    var refreshToken by remember { mutableIntStateOf(0) }
     var error by remember { mutableStateOf("") }
     var digestEnabled by remember { mutableStateOf(prefs.getBoolean("gaza_digest_enabled", false)) }
     val path = awarenessPaths.firstOrNull { it.id == selectedPathId } ?: awarenessPaths.first()
 
-    LaunchedEffect(loaded) {
-        if (!loaded) {
-            loading = true
-            try { news = fetchGazaNews(); loaded = true; error = if (news.isEmpty()) "لا توجد نتائج متاحة الآن." else "" }
-            catch (_: Exception) { error = "تعذر تحديث الموجز. تحقق من الاتصال وحاول مرة أخرى." }
-            finally { loading = false }
-        }
+    LaunchedEffect(refreshToken) {
+        loading = true
+        try { news = fetchGazaNews(); error = if (news.isEmpty()) "لا توجد نتائج متاحة الآن." else "" }
+        catch (_: Exception) { error = "تعذر تحديث الموجز. تحقق من الاتصال وحاول مرة أخرى." }
+        finally { loading = false }
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -291,7 +289,7 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
             Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("غزة | موجز الأخبار", color = AwarenessGreen, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text("روابط منشورة من مصادر متعددة يجمعها موجز بحث إخباري. هذا ليس تحققًا مستقلًا من كل خبر؛ افتح المصدر الأصلي وانتبه لتاريخ النشر والتحديث.")
-                Button(onClick = { loaded = false; error = ""; news = emptyList() }, enabled = !loading, colors = ButtonDefaults.buttonColors(containerColor = AwarenessGreen)) {
+                Button(onClick = { refreshToken++; error = "" }, enabled = !loading, colors = ButtonDefaults.buttonColors(containerColor = AwarenessGreen)) {
                     Text(if (loading) "جارٍ التحديث…" else "تحديث الأخبار")
                 }
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
