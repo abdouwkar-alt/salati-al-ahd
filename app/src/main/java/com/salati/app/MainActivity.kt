@@ -335,6 +335,9 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                     todayPrayerTimes = todayTimes.map { prayer ->
                         prayer.name to Instant.ofEpochMilli(prayer.time).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("hh:mm", Locale("ar")))
                     },
+                    resumeReadingLabel = if (prefs.contains("quran_surah") && prefs.contains("quran_ayah")) {
+                        "استكمال القراءة · " + (prefs.getString("quran_surah", "") ?: "") + " · آية " + (prefs.getString("quran_ayah", "") ?: "")
+                    } else "",
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     onOpen = { section, destination, subTab ->
                         activeSection = section
