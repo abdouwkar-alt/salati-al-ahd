@@ -262,12 +262,12 @@ private fun showRoutineNotification(context: Context, id: String, title: String,
         context, id.hashCode() + 17, snoozeIntent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
-    val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         android.app.Notification.Builder(context, ROUTINE_CHANNEL_ID)
     } else {
-        @Suppress("DEPRECATION")
         android.app.Notification.Builder(context)
-    }.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+    }
+    val notification = builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
         .setContentTitle(title)
         .setContentText(reminderText)
         .setStyle(android.app.Notification.BigTextStyle().bigText(reminderText))
@@ -328,7 +328,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
         persistAndSchedule()
     }
 
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = RoutineGreen)) {
             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("روتين يومك", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
