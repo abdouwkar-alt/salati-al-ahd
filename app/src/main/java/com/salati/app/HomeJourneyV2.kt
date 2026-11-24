@@ -247,20 +247,22 @@ private fun JvHeader(dateText: String, onOpenLearning: () -> Unit, onOpenRoutine
     ) {
         Column(
             Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
                 "أشهد أن لا إله إلا الله، وأشهد أن محمدًا رسول الله",
-                color = Color.White, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.White, fontWeight = FontWeight.Bold, textAlign = TextAlign.Right,
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
                 "رضيت بالله ربًا، وبالإسلام دينًا، وبمحمدٍ رسولًا",
-                color = JvGold, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall
+                modifier = Modifier.fillMaxWidth(),
+                color = JvGold, textAlign = TextAlign.Right, style = MaterialTheme.typography.bodySmall
             )
-            Text(dateText, color = Color.White.copy(alpha = .72f), style = MaterialTheme.typography.labelSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(dateText, modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = .72f), textAlign = TextAlign.Right, style = MaterialTheme.typography.labelSmall)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "وعي",
                     modifier = Modifier.clickable(onClick = onOpenAwareness).padding(vertical = 2.dp),
