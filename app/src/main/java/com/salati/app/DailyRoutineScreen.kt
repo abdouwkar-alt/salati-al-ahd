@@ -35,6 +35,7 @@ private const val ROUTINE_PREFS_KEY = "daily_routine_reminders_v1"
 private const val ROUTINE_CHANNEL_ID = "daily_routine_reminders"
 private const val ROUTINE_ACTION_FIRE = "com.salati.app.ROUTINE_FIRE"
 private const val ROUTINE_ACTION_SNOOZE = "com.salati.app.ROUTINE_SNOOZE"
+private const val ROUTINE_ACTION_SNOOZE_FIRE = "com.salati.app.ROUTINE_SNOOZE_FIRE"
 
 private data class RoutineReminder(
     val id: String,
@@ -138,7 +139,7 @@ private object RoutineAlarmScheduler {
 
     private fun scheduleAt(context: Context, reminder: RoutineReminder, triggerAtMillis: Long, isSnooze: Boolean) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val action = if (isSnooze) ROUTINE_ACTION_SNOOZE else ROUTINE_ACTION_FIRE
+        val action = if (isSnooze) ROUTINE_ACTION_SNOOZE_FIRE else ROUTINE_ACTION_FIRE
         val pendingIntent = alarmPendingIntent(context, reminder.id, action, isSnooze)
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarmManager.canScheduleExactAlarms()) {
@@ -186,20 +187,20 @@ class RoutineAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getStringExtra("routine_id") ?: return
         val prefs = context.getSharedPreferences("salati", Context.MODE_PRIVATE)
-        val isSnooze = intent.getBooleanExtra("is_snooze", false) || intent.action == ROUTINE_ACTION_SNOOZE
         val reminder = RoutineReminderStore.load(prefs).firstOrNull { it.id == id }
         val title = reminder?.title ?: intent.getStringExtra("routine_title") ?: "تذكير يومي"
         val category = reminder?.category ?: intent.getStringExtra("routine_category") ?: "مخصص"
 
-        if (!isSnooze && reminder != null) {
-            RoutineAlarmScheduler.scheduleNext(context, reminder, System.currentTimeMillis() + 1_000L)
-        }
-
-        showRoutineNotification(context, id, title, category)
-
+        // The notification's snooze action schedules one single reminder; the snooze alarm itself must not snooze forever.
         if (intent.action == ROUTINE_ACTION_SNOOZE) {
             RoutineAlarmScheduler.scheduleSnooze(context, id, title, category)
+            return
         }
+        val isSnoozeAlarm = intent.action == ROUTINE_ACTION_SNOOZE_FIRE
+        if (!isSnoozeAlarm && reminder != null) {
+            RoutineAlarmScheduler.scheduleNext(context, reminder, System.currentTimeMillis() + 1_000L)
+        }
+        showRoutineNotification(context, id, title, category)
     }
 }
 
@@ -286,6 +287,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
         mutableStateListOf<RoutineReminder>().apply { addAll(RoutineReminderStore.load(prefs)) }
     }
     var showEditor by remember { mutableStateOf(false) }
+    var editingReminderId by remember { mutableStateOf<String?>(null) }
     var draftTitle by remember { mutableStateOf("") }
     var draftCategory by remember { mutableStateOf("استيقاظ") }
     var draftHour by remember { mutableIntStateOf(7) }
@@ -353,6 +355,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
             Text("تذكيراتك", color = RoutineGreen, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Button(
                 onClick = {
+                    editingReminderId = null
                     draftTitle = ""
                     draftCategory = "استيقاظ"
                     draftHour = 7
@@ -369,6 +372,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
             listOf("استيقاظ", "وجبة", "نوم", "مخصص").forEach { category ->
                 OutlinedButton(
                     onClick = {
+                        editingReminderId = null
                         draftCategory = category
                         draftTitle = when (category) {
                             "استيقاظ" -> "الاستيقاظ"
@@ -422,14 +426,13 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = {
+                                editingReminderId = reminder.id
                                 draftTitle = reminder.title
                                 draftCategory = reminder.category
                                 draftHour = reminder.hour
                                 draftMinute = reminder.minute
                                 selectedDays.clear()
                                 selectedDays.addAll(reminder.days)
-                                reminders.removeAll { it.id == reminder.id }
-                                RoutineAlarmScheduler.cancel(context, reminder.id)
                                 showEditor = true
                             }) { Text("تعديل") }
                             TextButton(onClick = { removeReminder(reminder) }) { Text("حذف", color = Color(0xFF8A3C33)) }
@@ -491,7 +494,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
 
     if (showEditor) {
         AlertDialog(
-            onDismissRequest = { showEditor = false },
+            onDismissRequest = { showEditor = false; editingReminderId = null },
             title = { Text("إضافة تذكير") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -540,26 +543,30 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
             confirmButton = {
                 TextButton(onClick = {
                     if (draftTitle.isNotBlank() && selectedDays.isNotEmpty()) {
+                        val id = editingReminderId ?: UUID.randomUUID().toString()
+                        val old = reminders.firstOrNull { it.id == id }
                         val updated = RoutineReminder(
-                            id = UUID.randomUUID().toString(),
+                            id = id,
                             title = draftTitle.trim(),
                             category = draftCategory,
                             hour = draftHour,
                             minute = draftMinute,
                             days = selectedDays.toSet(),
-                            enabled = true
+                            enabled = old?.enabled ?: true
                         )
-                        reminders.add(updated)
+                        val existingIndex = reminders.indexOfFirst { it.id == id }
+                        if (existingIndex >= 0) reminders[existingIndex] = updated else reminders.add(updated)
                         RoutineReminderStore.save(prefs, reminders)
                         RoutineAlarmScheduler.scheduleNext(context, updated)
-                        feedback = "تمت إضافة التذكير."
+                        feedback = if (old == null) "تمت إضافة التذكير." else "تم تحديث التذكير."
+                        editingReminderId = null
                         showEditor = false
                     } else {
                         feedback = "اكتب اسمًا للتذكير واختر يومًا واحدًا على الأقل."
                     }
                 }) { Text("حفظ") }
             },
-            dismissButton = { TextButton(onClick = { showEditor = false }) { Text("إلغاء") } }
+            dismissButton = { TextButton(onClick = { showEditor = false; editingReminderId = null }) { Text("إلغاء") } }
         )
     }
 }
