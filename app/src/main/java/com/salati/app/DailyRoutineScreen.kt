@@ -133,8 +133,11 @@ private object RoutineAlarmScheduler {
     fun cancel(context: Context, reminderId: String) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pendingIntent = alarmPendingIntent(context, reminderId, ROUTINE_ACTION_FIRE, false)
+        val snoozePendingIntent = alarmPendingIntent(context, reminderId, ROUTINE_ACTION_SNOOZE_FIRE, true)
         alarmManager.cancel(pendingIntent)
+        alarmManager.cancel(snoozePendingIntent)
         pendingIntent.cancel()
+        snoozePendingIntent.cancel()
     }
 
     private fun scheduleAt(context: Context, reminder: RoutineReminder, triggerAtMillis: Long, isSnooze: Boolean) {
