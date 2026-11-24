@@ -369,6 +369,8 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
             }
         }
 
+        ScreenTimeUsageCard(prefs = prefs)
+
         Card(colors = CardDefaults.cardColors(containerColor = RoutineCream)) {
             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("خطوة اليوم", color = RoutineGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
