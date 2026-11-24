@@ -335,7 +335,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
-            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات") {
+            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي") {
                 item {
                     SectionNavigation(
                         section = when {
@@ -377,6 +377,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item { QiyamSessionFinishScreen(prefs = prefs) { qiyamRefresh++ } }
             } else if (mainTab == "الإنفاق") {
                 item { RemembranceCareScreen(prefs = prefs) }
+            } else if (mainTab == "التعلم_الأسبوعي") {
+                item { WeeklyLearningScreen(prefs = prefs) }
             } else if (mainTab == "التفكر") {
                 item {
                     SectionPlaceholder(
