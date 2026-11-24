@@ -222,12 +222,12 @@ fun ScreenTimeUsageCard(prefs: android.content.SharedPreferences) {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         )
                     }
-                }, colors = ButtonDefaults.buttonColors(containerColor = RoutineGreen)) {
+                }, colors = ButtonDefaults.buttonColors(containerColor = UsageGreen)) {
                     Text("فتح إعدادات الوصول إلى الاستخدام")
                 }
                 OutlinedButton(onClick = { refreshUsage() }) { Text("تحقق بعد الرجوع من الإعدادات") }
             } else {
-                Text("اختر التطبيقات التي تريد متابعتها", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
+                Text("اختر التطبيقات التي تريد متابعتها", color = UsageGreen, fontWeight = FontWeight.SemiBold)
                 if (installedApps.isEmpty()) {
                     Text("لم نجد التطبيقات المعروفة المثبتة على جهازك.", style = MaterialTheme.typography.bodySmall)
                 }
@@ -247,7 +247,7 @@ fun ScreenTimeUsageCard(prefs: android.content.SharedPreferences) {
                 }
                 if (selectedPackages.isNotEmpty()) {
                     HorizontalDivider(color = Color(0xFFE5EBDD))
-                    Text("الحد اليومي لكل تطبيق مختار", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
+                    Text("الحد اليومي لكل تطبيق مختار", color = UsageGreen, fontWeight = FontWeight.SemiBold)
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         listOf(30, 45, 60, 90, 120).forEach { minutes ->
                             FilterChip(
@@ -291,7 +291,7 @@ fun ScreenTimeUsageCard(prefs: android.content.SharedPreferences) {
                     feedback = "تم إيقاف متابعة التطبيقات وإلغاء التنبيهات."
                 }) { Text("إيقاف المتابعة وحذف اختياراتي") }
             }
-            if (feedback.isNotBlank()) Text(feedback, color = RoutineGreen, style = MaterialTheme.typography.bodySmall)
+            if (feedback.isNotBlank()) Text(feedback, color = UsageGreen, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
