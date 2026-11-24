@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.time.*
@@ -630,6 +631,7 @@ fun DailyRoutineScreen(prefs: android.content.SharedPreferences) {
 
 @Composable
 private fun RoutineReminderLearningCard(category: String) {
+    val uriHandler = LocalUriHandler.current
     val content = when (category) {
         "استيقاظ" -> Triple(
             "عند الاستيقاظ",
@@ -652,11 +654,26 @@ private fun RoutineReminderLearningCard(category: String) {
             Text(content.first, color = RoutineGreen, fontWeight = FontWeight.Bold)
             Text(content.second, style = MaterialTheme.typography.titleMedium)
             Text(content.third, color = Color(0xFF77736B), style = MaterialTheme.typography.bodySmall)
+            val primaryUrl = when (category) {
+                "استيقاظ" -> "https://sunnah.com/bukhari:6325"
+                "وجبة" -> "https://sunnah.com/riyadussalihin/2/1"
+                else -> "https://sunnah.com/bukhari:6325"
+            }
+            TextButton(onClick = { runCatching { uriHandler.openUri(primaryUrl) } }) { Text("افتح مصدر الذكر") }
             if (category == "وجبة") {
                 HorizontalDivider(color = RoutinePale)
                 Text("معلومة عن الطعام الذي أحبه النبي ﷺ", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
                 Text("ورد أنه ﷺ كان يحب الحلواء والعسل (جامع الترمذي 1831)، كما ورد أنه كان يعجبه القرع في خبر الثريد (سنن ابن ماجه 3303).")
                 Text("هذه أخبار عن طعام ورد في السنة، وليست خطة غذائية أو توصية طبية.", color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { runCatching { uriHandler.openUri("https://sunnah.com/tirmidhi/25/47") } }) { Text("مصدر الحلواء والعسل") }
+                TextButton(onClick = { runCatching { uriHandler.openUri("https://sunnah.com/ibnmajah/29/53") } }) { Text("مصدر القرع والثريد") }
+            }
+            if (category == "نوم") {
+                HorizontalDivider(color = RoutinePale)
+                Text("تذكرة لمن نوى قيام الليل", color = RoutineGreen, fontWeight = FontWeight.SemiBold)
+                Text("ورد أن من نوى القيام ثم غلبه النوم حتى أصبح كُتب له ما نوى، وكان نومه صدقة عليه من ربه — سنن النسائي (1787)، وحكم دار السلام عليه بالصحة.")
+                Text("هذا فيمن نوى قيام الليل ثم غلبه النوم؛ وليس معناه أن كل نوم يُحسب عبادة تلقائيًا دون نية.", color = Color(0xFF765B38), style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = { runCatching { uriHandler.openUri("https://sunnah.com/nasai/20/190") } }) { Text("مصدر الحديث") }
             }
         }
     }
