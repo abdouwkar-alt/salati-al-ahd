@@ -59,7 +59,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         PrayerNotifications.createChannel(this)
         AppUpdateWorker.schedule(this)
-        setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }) }
+        getSharedPreferences("salati", MODE_PRIVATE).edit().putLong("app_session_started_at", 0L).apply()
+        setContent { SalatiScreen(onFirstLaunchAccepted = { requestLocationPermissions() }, initialRoute = if (intent?.getBooleanExtra("open_daily_routine", false) == true) "روتين_اليوم" else null) }
         if (getSharedPreferences("salati", MODE_PRIVATE).getBoolean("intro_seen", false)) requestLocationPermissions()
     }
     private fun requestLocationPermissions() {
@@ -85,8 +86,41 @@ class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume()
+        val prefs = getSharedPreferences("salati", MODE_PRIVATE)
+        if (prefs.getLong("app_session_started_at", 0L) == 0L) {
+            prefs.edit().putLong("app_session_started_at", System.currentTimeMillis()).apply()
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) getLocationAndSchedule()
+    }
+
+    override fun onPause() {
+        recordForegroundSession()
+        super.onPause()
+    }
+
+    private fun recordForegroundSession() {
+        val prefs = getSharedPreferences("salati", MODE_PRIVATE)
+        val start = prefs.getLong("app_session_started_at", 0L)
+        val end = System.currentTimeMillis()
+        if (start <= 0L || end <= start) {
+            prefs.edit().putLong("app_session_started_at", 0L).apply()
+            return
+        }
+        val zone = ZoneId.systemDefault()
+        var cursor = start
+        while (cursor < end) {
+            val date = Instant.ofEpochMilli(cursor).atZone(zone).toLocalDate()
+            val nextDay = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            val segmentEnd = minOf(end, nextDay)
+            val key = "app_time_ms_" + date.toString()
+            prefs.edit().putLong(key, prefs.getLong(key, 0L) + (segmentEnd - cursor)).apply()
+            cursor = segmentEnd
+        }
+        prefs.edit()
+            .putLong("app_last_session_ms", end - start)
+            .putLong("app_session_started_at", 0L)
+            .apply()
     }
     private fun getLocationAndSchedule() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -147,7 +181,7 @@ private fun CounterCard(title: String, remaining: Int, unit: String, actionLabel
 }
 
 @Composable
-fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
+fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("salati", 0) }
     var introSeen by remember { mutableStateOf(prefs.getBoolean("intro_seen", false)) }
@@ -158,7 +192,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
     var missedSinceInstall by remember { mutableIntStateOf(prefs.getInt("missed_since_install", 0)) }
     var prayerBase by remember { mutableIntStateOf(prefs.getInt("prayer_base", -1)) }
     var fastBase by remember { mutableIntStateOf(prefs.getInt("fast_base", -1)) }
-    var mainTab by remember { mutableStateOf("الرئيسية") }
+    var mainTab by remember { mutableStateOf(initialRoute ?: "الرئيسية") }
     val navigationHistory = remember { mutableStateListOf<Pair<String, String>>() }
     var activeSection by remember { mutableStateOf("البداية") }
     fun navigateTo(destination: String) {
@@ -335,7 +369,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
             if (actionFeedback.isNotBlank()) {
                 item { Text(actionFeedback, color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             }
-            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي") {
+            if (mainTab != "الرئيسية" && mainTab != "الإحصائيات" && mainTab != "الإعدادات" && mainTab != "التعلم_الأسبوعي" && mainTab != "روتين_اليوم") {
                 item {
                     SectionNavigation(
                         section = when {
@@ -379,6 +413,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 item { RemembranceCareScreen(prefs = prefs) }
             } else if (mainTab == "التعلم_الأسبوعي") {
                 item { WeeklyLearningScreen(prefs = prefs) }
+            } else if (mainTab == "روتين_اليوم") {
+                item { DailyRoutineScreen(prefs = prefs) }
             } else if (mainTab == "التفكر") {
                 item {
                     SectionPlaceholder(
