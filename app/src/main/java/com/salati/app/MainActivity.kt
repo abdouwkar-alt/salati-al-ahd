@@ -801,11 +801,63 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}) {
                 }
             } else if (mainTab == "قيام الليل") {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = PaleGreen)) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("قيام الليل", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                            Text("اختر بين التعرف على السنن وبدء جلسة مستقلة للقراءة والتسجيل.")
+                    val zone = ZoneId.systemDefault()
+                    val nightStartText = Instant.ofEpochMilli(nightStart).atZone(zone).format(timeFormatter)
+                    val nightEndText = Instant.ofEpochMilli(nightEnd).atZone(zone).format(timeFormatter)
+                    val thirdStartText = Instant.ofEpochMilli(lastThirdStart).atZone(zone).format(timeFormatter)
+                    val nightIsOpen = clockNow >= nightStart && clockNow < nightEnd
+                    val savedSession = prefs.contains("qiyam_active_start_surah_name")
+                    val startLabel = if (savedSession) "استكمال القراءة" else "ابدأ جلسة قيام الليل"
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Card(colors = CardDefaults.cardColors(containerColor = Green)) {
+                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("قيام الليل", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium)
+                                Text(
+                                    if (nightIsOpen) "وقت الليل الآن — يمكنك البدء بما تيسر."
+                                    else "وقت قيام الليل يبدأ بعد المغرب ويمتد إلى طلوع الفجر.",
+                                    color = Color.White.copy(alpha = .94f)
+                                )
+                                HorizontalDivider(color = Color.White.copy(alpha = .28f))
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Column {
+                                        Text("المغرب", color = Color.White.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
+                                        Text(nightStartText, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text("الفجر", color = Color.White.copy(alpha = .75f), style = MaterialTheme.typography.labelSmall)
+                                        Text(nightEndText, color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                                Text("بداية الثلث الأخير تقريبًا: $thirdStartText", color = Color(0xFFF3D99F), fontWeight = FontWeight.SemiBold)
+                            }
                         }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                                Text("ابدأ من حيث أنت", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                Text("لا يلزم انتظار الثلث الأخير؛ يمكنك أن تصلي من بعد العشاء إلى الفجر، وتختار ما يناسب قدرتك.")
+                                Button(onClick = { navigateTo("قيام_الجلسة") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
+                                    Text(startLabel)
+                                }
+                                if (savedSession) {
+                                    Text("موضع قراءة سابق محفوظ على هذا الجهاز. يمكنك استكماله أو إنهاء الجلسة الحالية.", color = Color(0xFF756A55), style = MaterialTheme.typography.bodySmall)
+                                    OutlinedButton(onClick = { navigateTo("قيام_إنهاء") }, modifier = Modifier.fillMaxWidth()) {
+                                        Text("إنهاء الجلسة وحفظها")
+                                    }
+                                }
+                            }
+                        }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("ماذا تريد أن تفعل؟", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                                OutlinedButton(onClick = { navigateTo("قيام_السنن") }, modifier = Modifier.fillMaxWidth()) { Text("تعرف على صفة الصلاة والوتر") }
+                                OutlinedButton(onClick = { navigateTo("قيام_الفضل") }, modifier = Modifier.fillMaxWidth()) { Text("فضل قيام الليل وأدلته") }
+                                OutlinedButton(onClick = { navigateTo("قيام_السجل") }, modifier = Modifier.fillMaxWidth()) { Text("مراجعة الجلسات السابقة") }
+                            }
+                        }
+                        Text(
+                            "الثلث الأخير وقت فاضل، لكنه ليس الوقت الوحيد لقيام الليل. الأوقات المعروضة تقديرية بحسب مواقيت الصلاة المحفوظة في التطبيق.",
+                            color = Color(0xFF755F45), style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             } else if (mainTab == "قيام_الجلسة") {
