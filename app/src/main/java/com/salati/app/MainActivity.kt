@@ -351,12 +351,19 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                         }
                     }
                 )
-                BottomNavigationBar(selected = activeSection, onSelect = { destination ->
-                    activeSection = destination
-                    mainTab = when (destination) {
-                        "البداية" -> "الرئيسية"
-                        "الإحصائيات" -> "الإحصائيات"
-                        else -> "الإعدادات"
+                BottomNavigationBar(selected = when (mainTab) {
+                    "وعي" -> "وعي"
+                    "الصلاة", "الصوم", "السنن", "الأذكار", "الأدعية", "قيام الليل", "المصحف" -> "العبادة"
+                    "الإنفاق", "روتين_اليوم", "صلة_الرحم" -> "الخير والناس"
+                    else -> "الرئيسية"
+                }, onSelect = { destination ->
+                    navigationHistory.clear()
+                    sectionSubTab = ""
+                    when (destination) {
+                        "الرئيسية" -> { activeSection = "البداية"; mainTab = "الرئيسية" }
+                        "وعي" -> { activeSection = "وعي"; mainTab = "وعي" }
+                        "العبادة" -> { activeSection = "العبادة"; mainTab = "الصلاة"; sectionSubTab = "تسجيل الصلاة" }
+                        "الخير والناس" -> { activeSection = "الخير والناس"; mainTab = "الإنفاق" }
                     }
                 })
             }
@@ -1020,15 +1027,21 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
             item { Spacer(Modifier.height(12.dp)) }
         }
         BottomNavigationBar(
-            selected = activeSection,
+            selected = when (mainTab) {
+                "وعي" -> "وعي"
+                "الصلاة", "الصوم", "السنن", "الأذكار", "الأدعية", "قيام الليل", "المصحف" -> "العبادة"
+                "الإنفاق", "روتين_اليوم", "صلة_الرحم" -> "الخير والناس"
+                else -> "الرئيسية"
+            },
             onSelect = { destination ->
-                activeSection = destination
-                mainTab = when (destination) {
-                    "البداية" -> "الرئيسية"
-                    "الإحصائيات" -> "الإحصائيات"
-                    else -> "الإعدادات"
-                }
+                navigationHistory.clear()
                 sectionSubTab = ""
+                when (destination) {
+                    "الرئيسية" -> { activeSection = "البداية"; mainTab = "الرئيسية" }
+                    "وعي" -> { activeSection = "وعي"; mainTab = "وعي" }
+                    "العبادة" -> { activeSection = "العبادة"; mainTab = "الصلاة"; sectionSubTab = "تسجيل الصلاة" }
+                    "الخير والناس" -> { activeSection = "الخير والناس"; mainTab = "الإنفاق" }
+                }
             }
         )
         }
