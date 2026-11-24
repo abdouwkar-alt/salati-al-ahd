@@ -199,7 +199,8 @@ fun AwarenessHubScreen(prefs: android.content.SharedPreferences) {
     val uriHandler = LocalUriHandler.current
     val context = androidx.compose.ui.platform.LocalContext.current
     var selectedPathId by remember { mutableStateOf(prefs.getString("awareness_path_id", "iman") ?: "iman") }
-    var expandedModule by remember { mutableStateOf("") }    var lessonNote by remember { mutableStateOf("") }
+    var expandedModule by remember { mutableStateOf("") }
+    var lessonNote by remember { mutableStateOf("") }
     var lessonFeedback by remember { mutableStateOf("") }
     val reviewedLessons = remember { mutableStateListOf<String>().apply { addAll(prefs.getStringSet("awareness_reviewed_lessons", emptySet()).orEmpty()) } }
     var interests by remember { mutableStateOf(prefs.getStringSet("awareness_interests", setOf("iman", "akhlaq", "seerah"))?.toSet().orEmpty()) }
