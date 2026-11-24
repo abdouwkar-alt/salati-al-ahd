@@ -259,14 +259,10 @@ private fun JvRoute.pointAt(d: Float): Offset {
 private fun JvJourney(onOpen: (String, String, String) -> Unit, modifier: Modifier = Modifier) {
     val doors = remember {
         listOf(
-            JvDoorSpec("الإنفاق", "الإنفاق", "الإنفاق", .76f, .27f, Icons.Filled.VolunteerActivism),
-            JvDoorSpec("الصدقات", "الإنفاق", "الإنفاق", .24f, .35f, Icons.Filled.Savings),
-            JvDoorSpec("الصوم", "الصوم", "الصوم", .76f, .43f, Icons.Filled.Nightlight),
-            JvDoorSpec("التفقه", "التفقه", "فقه الصلاة", .24f, .51f, Icons.Filled.School),
-            JvDoorSpec("الأذكار", "الأذكار", "الأذكار", .76f, .59f, Icons.Filled.AutoAwesome),
-            JvDoorSpec("سنن الرسول ﷺ", "سنن الرسول ﷺ", "السنن", .24f, .67f, Icons.Filled.Stars),
-            JvDoorSpec("القرآن", "تدبر القرآن", "تدبر القرآن", .76f, .75f, Icons.Filled.MenuBook),
-            JvDoorSpec("الدعاء", "الدعاء", "الأدعية", .24f, .83f, Icons.Filled.PanTool)
+            JvDoorSpec("وعي", "وعي", "وعي", .76f, .31f, Icons.Filled.Lightbulb),
+            JvDoorSpec("الخير والناس", "الإنفاق", "الإنفاق", .24f, .47f, Icons.Filled.VolunteerActivism),
+            JvDoorSpec("القرآن", "تدبر القرآن", "تدبر القرآن", .76f, .63f, Icons.Filled.MenuBook),
+            JvDoorSpec("روتين اليوم", "روتين يومك", "روتين_اليوم", .24f, .79f, Icons.Filled.EventNote)
         )
     }
     val verses = remember {
@@ -317,7 +313,7 @@ private fun JvJourney(onOpen: (String, String, String) -> Unit, modifier: Modifi
                 }
             }
             val route = remember(nodes) { jvBuildRoute(nodes) }
-            val progress = remember(route) { Animatable(route.nodeDist[JvJourneyMemory.node.coerceIn(0, 9)]) }
+            val progress = remember(route) { Animatable(route.nodeDist[JvJourneyMemory.node.coerceIn(0, doors.size + 1)]) }
             val stridePx = with(density) { 26.dp.toPx() }
 
             // ── الخلفية: تدرج + زخرفة نجمية خفيفة + هالة الباب الأخير
@@ -428,8 +424,8 @@ private fun JvJourney(onOpen: (String, String, String) -> Unit, modifier: Modifi
                     JvDoorView(
                         title = "الصلاة", icon = null, palette = JvPrayerPalette,
                         doorW = prayerW, doorH = prayerH,
-                        open = { if (target == 8) doorOpen.value else 0f },
-                        onClick = { if (target < 0) target = 8 }
+                        open = { if (target == doors.size) doorOpen.value else 0f },
+                        onClick = { if (target < 0) target = doors.size }
                     )
                 }
             }
@@ -500,7 +496,7 @@ private fun JvJourney(onOpen: (String, String, String) -> Unit, modifier: Modifi
                 doorOpen.animateTo(1f, spring(dampingRatio = .8f, stiffness = 90f))
                 delay(180)
                 enter.animateTo(1f, tween(420))
-                if (target == 8) onOpen("الصلاة", "الصلاة", "")
+                if (target == doors.size) onOpen("الصلاة", "الصلاة", "")
                 else onOpen(doors[target].section, doors[target].destination, "")
                 doorOpen.snapTo(0f); enter.snapTo(0f); target = -1
             }
