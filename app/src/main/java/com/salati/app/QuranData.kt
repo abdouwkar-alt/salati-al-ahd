@@ -258,7 +258,8 @@ fun QuranReaderSection(
                                 Text("صحيح مسلم، حديث ١١٦٣", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                             }
                         }
-                        val hasSavedSession = prefs.contains("qiyam_active_start_surah_name") &&
+                        val hasSavedSession = prefs.getBoolean("qiyam_resume_position", true) &&
+                            prefs.contains("qiyam_active_start_surah_name") &&
                             (prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.isNotEmpty() == true)
                         Button(onClick = {
                             if (!hasSavedSession) {
