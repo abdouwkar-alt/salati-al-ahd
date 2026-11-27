@@ -231,17 +231,10 @@ fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {})
         Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("إنهاء جلسة قيام الليل", color = SectionGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text("عدد الآيات المسجّل في الجلسة: $verses")
                 Text("موضع القراءة: $fromSurah، من الآية $fromAyah إلى $toSurah، الآية $toAyah")
                 Text("قال رسول الله ﷺ: «مَن قام بعشر آيات لم يُكتب من الغافلين، ومن قام بمئة آية كُتب من القانتين، ومن قام بألف آية كُتب من المقنطرين».")
                 Text("سنن أبي داود (1398)، صحيح الألباني.", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                if (saved) {
-                    Text(reward, color = SectionGreen, fontWeight = FontWeight.Bold)
-                    Text("تم تسجيل الجلسة. هذه هي المنزلة الموافقة لعدد الآيات المسجّل، ولا تعني الحكم على القبول أو تحقق الأجر لشخص بعينه.", color = SectionGreen, fontWeight = FontWeight.SemiBold)
-                } else {
-                    Text("بعد الضغط على «حفظ الجلسة» ستظهر هنا المنزلة الموافقة لعدد الآيات المسجّل.")
-                }
-                Text("هذا تذكير بما ورد في الحديث بناءً على عدد الآيات الذي سجلته، وليس حكمًا على القبول أو تحقق الأجر لشخص بعينه.")
+                Text("هذا الحديث للتذكير بفضل قيام الليل بالقرآن، وليس لتقييم الجلسة أو الحكم على قبول العمل.")
             }
         }
         if (!saved) {
@@ -315,7 +308,7 @@ fun QiyamHistoryScreen(prefs: SharedPreferences) {
                     Text("جلسة ${history.size - index} — ${entry.optString("date")}", color = SectionGreen, fontWeight = FontWeight.Bold)
                     Text("السورة: ${entry.optString("surah", "غير محدد")}")
                     Text("من الآية ${entry.optInt("fromAyah")} إلى ${entry.optInt("toAyah")} — التوقف عند ${entry.optInt("stopAyah")}")
-                    Text("إجمالي الآيات: ${entry.optInt("verses")} | الركعات: ${entry.optInt("rakats")} | الوتر: ${if (entry.optBoolean("witr")) "نعم" else "لا"}")
+                    Text("الركعات: ${entry.optInt("rakats")} | الوتر: ${if (entry.optBoolean("witr")) "نعم" else "لا"}")
                     if (entry.optString("reflection").isNotBlank()) Text("ملاحظتك: ${entry.optString("reflection")}")
                 }
             }
