@@ -138,6 +138,7 @@ fun QiyamSessionSettingsScreen(prefs: SharedPreferences, onStart: () -> Unit) {
     var show1000 by remember { mutableStateOf(prefs.getBoolean("qiyam_milestone_1000", true)) }
     var focusReminder by remember { mutableStateOf(prefs.getBoolean("qiyam_focus_reminder", true)) }
     var resumePosition by remember { mutableStateOf(prefs.getBoolean("qiyam_resume_position", true)) }
+    var showFocusDialog by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -202,10 +203,23 @@ fun QiyamSessionSettingsScreen(prefs: SharedPreferences, onStart: () -> Unit) {
                 .putBoolean("qiyam_focus_reminder", focusReminder)
                 .putBoolean("qiyam_resume_position", resumePosition)
                 .apply()
-            onStart()
+            if (focusReminder) showFocusDialog = true else onStart()
         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) {
             Text("الانتقال إلى المصحف")
         }
+    }
+    if (showFocusDialog) {
+        AlertDialog(
+            onDismissRequest = { showFocusDialog = false },
+            title = { Text("تهيئة وقت القراءة") },
+            text = { Text("خذ لحظة لتقليل المشتتات. يمكنك تفعيل وضع عدم الإزعاج أو وضع الطيران يدويًا إذا كان ذلك مناسبًا لك.") },
+            confirmButton = {
+                TextButton(onClick = { showFocusDialog = false; onStart() }) { Text("متابعة إلى المصحف") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFocusDialog = false }) { Text("رجوع للإعدادات") }
+            }
+        )
     }
 }
 
