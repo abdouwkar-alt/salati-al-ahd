@@ -131,6 +131,85 @@ fun QiyamSunnahLearningScreen() {
 }
 
 @Composable
+fun QiyamSessionSettingsScreen(prefs: SharedPreferences, onStart: () -> Unit) {
+    var countMode by remember { mutableStateOf(prefs.getString("qiyam_count_mode", "hidden") ?: "hidden") }
+    var show10 by remember { mutableStateOf(prefs.getBoolean("qiyam_milestone_10", true)) }
+    var show100 by remember { mutableStateOf(prefs.getBoolean("qiyam_milestone_100", true)) }
+    var show1000 by remember { mutableStateOf(prefs.getBoolean("qiyam_milestone_1000", true)) }
+    var focusReminder by remember { mutableStateOf(prefs.getBoolean("qiyam_focus_reminder", true)) }
+    var resumePosition by remember { mutableStateOf(prefs.getBoolean("qiyam_resume_position", true)) }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = SectionPale)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("تهيئة جلسة قيام الليل", color = SectionGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text("اختر طريقة العرض التي تريحك. يمكنك تغيير هذه الاختيارات قبل أي جلسة.")
+            }
+        }
+        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("عداد الآيات", color = SectionGreen, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    RadioButton(selected = countMode == "hidden", onClick = { countMode = "hidden"; prefs.edit().putString("qiyam_count_mode", countMode).apply() })
+                    Text("إخفاء العدد")
+                }
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    RadioButton(selected = countMode == "always", onClick = { countMode = "always"; prefs.edit().putString("qiyam_count_mode", countMode).apply() })
+                    Text("إظهار العدد أثناء القراءة")
+                }
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    RadioButton(selected = countMode == "milestones", onClick = { countMode = "milestones"; prefs.edit().putString("qiyam_count_mode", countMode).apply() })
+                    Text("تذكير عند محطات مختارة")
+                }
+                if (countMode == "milestones") {
+                    HorizontalDivider()
+                    Text("اختر المحطات التي تريد تذكيرك بفضلها", fontWeight = FontWeight.SemiBold)
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Checkbox(show10, { show10 = it; prefs.edit().putBoolean("qiyam_milestone_10", it).apply() })
+                        Text("عشر آيات")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Checkbox(show100, { show100 = it; prefs.edit().putBoolean("qiyam_milestone_100", it).apply() })
+                        Text("مائة آية")
+                    }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Checkbox(show1000, { show1000 = it; prefs.edit().putBoolean("qiyam_milestone_1000", it).apply() })
+                        Text("ألف آية")
+                    }
+                    Text("هذه تذكيرات بالفضل وليست أهدافًا أو تحديات، ولن نعرض عدد الآيات المتبقية.", color = Color(0xFF756A55), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("تهيئة القراءة", color = SectionGreen, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Checkbox(focusReminder, { focusReminder = it; prefs.edit().putBoolean("qiyam_focus_reminder", it).apply() })
+                    Text("تذكيري بتقليل المشتتات قبل القراءة")
+                }
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Checkbox(resumePosition, { resumePosition = it; prefs.edit().putBoolean("qiyam_resume_position", it).apply() })
+                    Text("استكمال موضع القراءة السابق تلقائيًا")
+                }
+                Text("التطبيق لا يفعّل وضع الطيران أو عدم الإزعاج تلقائيًا؛ يمكنك تفعيلهما بنفسك من إعدادات الهاتف.", color = Color(0xFF756A55), style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Button(onClick = {
+            prefs.edit()
+                .putString("qiyam_count_mode", countMode)
+                .putBoolean("qiyam_milestone_10", show10)
+                .putBoolean("qiyam_milestone_100", show100)
+                .putBoolean("qiyam_milestone_1000", show1000)
+                .putBoolean("qiyam_focus_reminder", focusReminder)
+                .putBoolean("qiyam_resume_position", resumePosition)
+                .apply()
+            onStart()
+        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = SectionGreen)) {
+            Text("الانتقال إلى المصحف")
+        }
+    }
+}
+
+@Composable
 fun QiyamSessionFinishScreen(prefs: SharedPreferences, onSaved: () -> Unit = {}) {
     val today = LocalDate.now().toString()
     var rakats by remember(today) { mutableStateOf("") }
