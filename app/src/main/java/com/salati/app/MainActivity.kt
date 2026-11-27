@@ -922,7 +922,7 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                                 Text("ابدأ من حيث أنت", color = Green, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                                 Text("لا يلزم انتظار الثلث الأخير؛ يمكنك أن تصلي من بعد العشاء إلى الفجر، وتختار ما يناسب قدرتك.")
-                                Button(onClick = { navigateTo("قيام_الجلسة") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
+                                Button(onClick = { navigateTo("قيام_إعدادات") }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Green)) {
                                     Text(startLabel)
                                 }
                                 if (savedSession) {
@@ -947,6 +947,8 @@ fun SalatiScreen(onFirstLaunchAccepted: () -> Unit = {}, initialRoute: String? =
                         )
                     }
                 }
+            } else if (mainTab == "قيام_إعدادات") {
+                item { QiyamSessionSettingsScreen(prefs = prefs) { navigateTo("قيام_الجلسة") } }
             } else if (mainTab == "قيام_الجلسة") {
                 item {
                     QuranReaderSection(
