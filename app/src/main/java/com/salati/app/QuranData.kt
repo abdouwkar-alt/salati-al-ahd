@@ -143,6 +143,7 @@ fun QuranReaderSection(
     var readerOpen by remember { mutableStateOf(false) }
     var readingTheme by remember { mutableStateOf(prefs.getString("qiyam_reader_theme", "dark") ?: "dark") }
     var readAyahKeys by remember { mutableStateOf(prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.toSet() ?: emptySet()) }
+    var milestoneMessage by remember { mutableStateOf<String?>(null) }
 
     fun load(force: Boolean = false) {
         scope.launch {
@@ -262,7 +263,10 @@ fun QuranReaderSection(
                         Button(onClick = {
                             if (!hasSavedSession) {
                                 readAyahKeys = setOf("${current.number}:${selectedAyah}")
-                                prefs.edit().putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
+                                prefs.edit().putStringSet("qiyam_active_ayah_keys", readAyahKeys)
+                                    .remove("qiyam_milestone_shown_10")
+                                    .remove("qiyam_milestone_shown_100")
+                                    .remove("qiyam_milestone_shown_1000").apply()
                                 onSessionStart?.invoke(current.number, current.name, selectedAyah)
                             } else {
                                 readAyahKeys = prefs.getStringSet("qiyam_active_ayah_keys", emptySet())?.toSet() ?: emptySet()
@@ -319,7 +323,12 @@ fun QuranReaderSection(
         }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             Surface(Modifier.fillMaxSize(), color = pageBackground) {
                 Column(Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                    Text("مصحف قيام الليل", color = pageForeground, style = MaterialTheme.typography.titleMedium, modifier = Modifier.align(Alignment.CenterHorizontally))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("مصحف قيام الليل", color = pageForeground, style = MaterialTheme.typography.titleMedium)
+                        if (prefs.getString("qiyam_count_mode", "hidden") == "always") {
+                            Text("الآيات التي مررت بها في هذه الجلسة: ${readAyahKeys.size}", color = pageForeground.copy(alpha = .72f), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                     Box(
                         Modifier.weight(1f).fillMaxWidth().pointerInput(selectedNumber, selectedAyah, surahs) {
                             var totalDrag = 0f
@@ -338,7 +347,26 @@ fun QuranReaderSection(
                                     totalDrag = 0f
                                     val name = surahs.firstOrNull { it.number == selectedNumber }?.name.orEmpty()
                                     readAyahKeys = readAyahKeys + "${selectedNumber}:${selectedAyah}"
+                                    val countNow = readAyahKeys.size
                                     prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", name).putString("quran_ayah", selectedAyah.toString()).putStringSet("qiyam_active_ayah_keys", readAyahKeys).apply()
+                                    if (prefs.getString("qiyam_count_mode", "hidden") == "milestones") {
+                                        val checkpoints = listOf(
+                                            Triple(10, "qiyam_milestone_10", "عشر آيات"),
+                                            Triple(100, "qiyam_milestone_100", "مائة آية"),
+                                            Triple(1000, "qiyam_milestone_1000", "ألف آية")
+                                        )
+                                        val reached = checkpoints.firstOrNull { (number, key, _) ->
+                                            countNow == number && prefs.getBoolean(key, true) && !prefs.getBoolean("qiyam_milestone_shown_${number}", false)
+                                        }
+                                        if (reached != null) {
+                                            milestoneMessage = when (reached.first) {
+                                                10 -> "قال رسول الله ﷺ: «مَن قام بعشر آيات لم يُكتب من الغافلين»."
+                                                100 -> "قال رسول الله ﷺ: «ومَن قام بمائة آية كُتب من القانتين»."
+                                                else -> "قال رسول الله ﷺ: «ومَن قام بألف آية كُتب من المقنطرين»."
+                                            } + "\n\nهذا تذكير بالفضل، وليس هدفًا أو حكمًا على قبول العمل."
+                                            prefs.edit().putBoolean("qiyam_milestone_shown_${reached.first}", true).apply()
+                                        }
+                                    }
                                     onPositionSelected(selectedNumber, name, selectedAyah)
                                 },
                                 onDragCancel = { totalDrag = 0f }
@@ -357,6 +385,15 @@ fun QuranReaderSection(
 
                             }
                         }
+                    }
+                    if (milestoneMessage != null) {
+                        AlertDialog(
+                            onDismissRequest = { milestoneMessage = null },
+                            title = { Text("فضل قيام الليل") },
+                            text = { Text(milestoneMessage.orEmpty()) },
+                            confirmButton = { TextButton(onClick = { milestoneMessage = null }) { Text("متابعة القراءة") } },
+                            containerColor = Color(0xFFF6F2E9)
+                        )
                     }
                     Button(onClick = {
                         prefs.edit().putInt("quran_surah_number", selectedNumber).putString("quran_surah", activeSurah?.name ?: "").putString("quran_ayah", selectedAyah.toString()).apply()
