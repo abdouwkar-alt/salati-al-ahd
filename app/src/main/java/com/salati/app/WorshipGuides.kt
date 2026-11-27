@@ -15,109 +15,39 @@ private val WorshipPale = Color(0xFFE5EBDD)
 
 @Composable
 fun QiyamTrackerScreen(prefs: SharedPreferences, refreshToken: Int = 0) {
-    val todayDate = LocalDate.now()
-    val today = todayDate.toString()
-    val dayKey = "qiyam_verses_" + today
-    var verses by remember(today, refreshToken) { mutableIntStateOf(prefs.getInt(dayKey, if (prefs.getString("qiyam_date", "") == today) prefs.getInt("qiyam_verses", 0) else 0)) }
-    var entered by remember { mutableStateOf("10") }
-    var rakats by remember(today) { mutableStateOf(prefs.getInt("qiyam_rakats_" + today, 0).toString()) }
-    var witrDone by remember(today) { mutableStateOf(prefs.getBoolean("qiyam_witr_" + today, false)) }
-    var sessions by remember(today) { mutableIntStateOf(prefs.getInt("qiyam_sessions_" + today, 0)) }
-    val allPrefs = prefs.all
-    val history = remember(allPrefs, today, refreshToken) {
-        (0L..29L).map { todayDate.minusDays(it) }.map { date ->
-            val count = prefs.getInt("qiyam_verses_" + date, if (date == todayDate) verses else 0)
-            date to count
-        }
+    val today = LocalDate.now().toString()
+    val history = remember(refreshToken, today) {
+        try { org.json.JSONArray(prefs.getString("qiyam_session_history", "[]")) }
+        catch (_: Exception) { org.json.JSONArray() }
     }
-    val weekTotal = history.take(7).sumOf { it.second }
-    val monthTotal = history.sumOf { it.second }
-    val activeNights = history.count { it.second >= 10 }
-    val weekRakats = history.take(7).sumOf { prefs.getInt("qiyam_rakats_" + it.first, 0) }
-    val monthRakats = history.sumOf { prefs.getInt("qiyam_rakats_" + it.first, 0) }
-    val weekWitrNights = history.take(7).count { prefs.getBoolean("qiyam_witr_" + it.first, false) }
-    val monthWitrNights = history.count { prefs.getBoolean("qiyam_witr_" + it.first, false) }
-    val weekSessions = history.take(7).sumOf { prefs.getInt("qiyam_sessions_" + it.first, 0) }
-    val monthSessions = history.sumOf { prefs.getInt("qiyam_sessions_" + it.first, 0) }
-
+    val sessions = (0 until history.length()).mapNotNull { history.optJSONObject(it) }
+    val recent = sessions.take(5)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(colors = CardDefaults.cardColors(containerColor = WorshipGreen)) {
             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("قيام الليل", color = Color.White, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                Text("الآيات المسجلة اليوم", color = Color.White.copy(alpha = 0.9f))
-                Text(verses.toString() + " آية", color = Color.White, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Bold)
-                Text("تُسجل الآيات من المصحف عند تثبيت موضع التوقف، ويمكنك تعديل العدد هنا.", color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodySmall)
+                Text("اجعل لك من الليل نصيبًا بما تستطيع، دون تكلف أو مقارنة.", color = Color.White)
             }
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Text("مصحف قيام الليل", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text("الجلسات المسجلة اليوم: $sessions")
-                Button(onClick = {
-                    sessions++
-                    prefs.edit().putInt("qiyam_sessions_" + today, sessions).apply()
-                }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = WorshipGreen)) { Text("بدء جلسة جديدة") }
-                Text("عدد الركعات والوتر", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                OutlinedTextField(value = rakats, onValueChange = { rakats = it.filter(Char::isDigit).take(2) }, label = { Text("عدد ركعات قيام الليل") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Checkbox(checked = witrDone, onCheckedChange = {
-                        witrDone = it
-                        prefs.edit().putBoolean("qiyam_witr_" + today, it).apply()
-                    })
-                    Text("صليت الوتر")
-                }
-                Button(onClick = {
-                    val value = rakats.toIntOrNull()?.coerceIn(0, 99) ?: 0
-                    prefs.edit().putInt("qiyam_rakats_" + today, value).apply()
-                }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = WorshipGreen)) { Text("حفظ الركعات والوتر") }
-            }
-        }
-        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Text("تسجيل عدد الآيات", color = WorshipGreen, fontWeight = FontWeight.Bold)
-                OutlinedTextField(value = entered, onValueChange = { entered = it.filter(Char::isDigit).take(4) }, label = { Text("عدد الآيات") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Button(onClick = {
-                    val amount = entered.toIntOrNull()
-                    if (amount != null && amount > 0 && amount <= 6236) {
-                        verses = amount
-                        prefs.edit().putString("qiyam_date", today).putInt("qiyam_verses", verses).putInt(dayKey, verses).apply()
-                    }
-                }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = WorshipGreen)) { Text("حفظ عدد الآيات") }
-            }
-        }
-        listOf(
-            Triple(10, "لم يُكتب من الغافلين", "بلوغ عشر آيات في الليلة"),
-            Triple(100, "كُتب من القانتين", "بلوغ مئة آية في الليلة"),
-            Triple(1000, "كُتب من المقنطرين", "بلوغ ألف آية في الليلة")
-        ).forEach { (goal, reward, label) ->
-            val reached = verses >= goal
-            Card(colors = CardDefaults.cardColors(containerColor = if (reached) WorshipPale else Color.White)) {
-                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text(label, color = WorshipGreen, fontWeight = FontWeight.Bold)
-                    Text(reward, fontWeight = FontWeight.SemiBold)
-                    LinearProgressIndicator(progress = { (verses.toFloat() / goal.toFloat()).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth(), color = WorshipGreen)
-                    Text(if (reached) "تم بلوغ هذا المستوى اليوم." else "المتبقي: " + (goal - verses) + " آية")
+            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Text("جلساتك المسجلة", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text("عدد الجلسات المسجلة: ${sessions.size}")
+                if (recent.isEmpty()) Text("لم تسجل جلسات بعد.")
+                recent.forEach { entry ->
+                    HorizontalDivider()
+                    Text(entry.optString("date"))
+                    Text("السورة: ${entry.optString("surah", "غير محدد")}")
+                    Text("الركعات: ${entry.optInt("rakats")} | الوتر: ${if (entry.optBoolean("witr")) "نعم" else "لا"}")
+                    if (entry.optString("reflection").isNotBlank()) Text(entry.optString("reflection"), color = Color(0xFF756A55), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
         Card(colors = CardDefaults.cardColors(containerColor = WorshipPale)) {
-            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("محصلة قيام الليل", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text("اليوم: $verses آية")
-                Text("آخر 7 أيام: $weekTotal آية، و$weekRakats ركعة")
-                Text("آخر 30 يومًا: $monthTotal آية، و$monthRakats ركعة")
-                Text("ليالٍ بلغت عشر آيات على الأقل: $activeNights")
-                Text("الوتر: $weekWitrNights مرات في آخر 7 أيام، و$monthWitrNights مرة في آخر 30 يومًا")
-                Text("جلسات القيام: $weekSessions في آخر 7 أيام، و$monthSessions في آخر 30 يومًا")
-                Text("البيانات مبنية على ما سجلته، ولا تقيس الإخلاص أو القبول.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
-            }
-        }
-        Card(colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text("فضل قيام الليل بالقرآن", color = WorshipGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("فضل قيام الليل بالقرآن", color = WorshipGreen, fontWeight = FontWeight.Bold)
                 Text("قال رسول الله ﷺ: «مَنْ قَامَ بِعَشْرِ آيَاتٍ لَمْ يُكْتَبْ مِنَ الْغَافِلِينَ، وَمَنْ قَامَ بِمِائَةِ آيَةٍ كُتِبَ مِنَ الْقَانِتِينَ، وَمَنْ قَامَ بِأَلْفِ آيَةٍ كُتِبَ مِنَ الْمُقَنْطِرِينَ».")
-                Text("سنن أبي داود (1398)، وصححه الألباني.", color = Color(0xFF77736B), style = MaterialTheme.typography.bodySmall)
-                Text("المراتب تتعلق بما يُقرأ في صلاة الليل في الليلة نفسها، ولا تُجمع آيات ليالٍ مختلفة للوصول إلى مرتبة الحديث.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF755F45))
+                Text("سنن أبي داود (1398)، وصححه الألباني. يذكر التطبيق هذا الحديث للترغيب، لا لتحويل القراءة إلى سباق أو تقييم.", color = Color(0xFF77736B), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
